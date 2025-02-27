@@ -77,7 +77,7 @@ IncludeCategories:
 IndentCaseLabels: true
 IndentWidth:     4
 IndentExternBlock: AfterExternBlock
-IndentPPDirectives: None
+IndentPPDirectives: BeforeHash
 IndentWrappedFunctionNames: false
 JavaScriptQuotes: Leave
 JavaScriptWrapImports: true
