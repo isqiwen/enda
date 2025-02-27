@@ -1,0 +1,74 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Baseline
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+cpp_indent_lambda_braces_when_parameter = true
+
+# CPP files
+[*.cpp]
+indent_style = space
+indent_size = 4
+max_line_length = 160
+
+[*.h]
+indent_style = space
+indent_size = 4
+
+# ReSharper properties
+resharper_cpp_keep_user_linebreaks = true
+resharper_cpp_wrap_lines = true
+resharper_cpp_wrap_before_colon = true
+resharper_cpp_line_break_before_comma_in_member_initializer_lists = true
+
+# MSBuild
+[*.{csproj,proj,projitems,shproj,fsproj,target,props}]
+indent_style = space
+indent_size = 2
+
+# XML config files
+[*.{config,nuspec,resx,natvis}]
+indent_style = space
+indent_size = 2
+
+# Python files
+[*.py]
+indent_style = space
+indent_size = 4
+
+# cmake
+[cmake/*.txt]
+indent_style = space
+indent_size = 4
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+# Json files
+[*.json]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = false
+
+# YAML files
+[*.yaml]
+indent_style = space
+indent_size = 4
+
+# Shell files
+[*.sh]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
