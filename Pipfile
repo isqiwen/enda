@@ -9,8 +9,6 @@ verify_ssl = true
 name = "pypitunatsinghuaedu"
 
 [packages]
-cmake = {version = "*", index = "pypitunatsinghuaedu"}
-clang-format = {version = "*", index = "pypitunatsinghuaedu"}
 
 [dev-packages]
 
