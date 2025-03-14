@@ -39,4 +39,41 @@ namespace enda
     template<typename S>
     inline constexpr bool is_scalar_v = std::is_arithmetic_v<std::remove_cvref_t<S>> or is_complex_v<S>;
 
+    /// Constexpr variable that specifies the rank of an nda::Array or of a contiguous 1-dimensional range.
+    template<typename A>
+    requires(std::ranges::contiguous_range<A> or requires { std::declval<A const>().shape(); }) constexpr int get_rank = []() {
+        if constexpr (std::ranges::contiguous_range<A>)
+            return 1;
+        else
+            return std::tuple_size_v<std::remove_cvref_t<decltype(std::declval<A const>().shape())>>;
+    }();
+
+    /**
+     * @brief Get the first element of an array/view or simply return the scalar if a scalar is given.
+     *
+     * @tparam A Array/View/Scalar type.
+     * @param a Input array/view/scalar.
+     * @return If an array/view is given, return its first element. Otherwise, return the given scalar.
+     */
+    template<typename A>
+    decltype(auto) get_first_element(A const& a)
+    {
+        if constexpr (is_scalar_v<A>)
+        {
+            return a;
+        }
+        else
+        {
+            return [&a]<auto... Is>(std::index_sequence<Is...>) -> decltype(auto) {
+                return a((0 * Is)...); // repeat 0 sizeof...(Is) times
+            }(std::make_index_sequence<get_rank<A>> {});
+        }
+    }
+
+    /**
+     * @brief Get the value type of an array/view or a scalar type.
+     * @tparam A Array/View/Scalar type.
+     */
+    template<typename A>
+    using get_value_t = std::decay_t<decltype(get_first_element(std::declval<A const>()))>;
 } // namespace enda

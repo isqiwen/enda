@@ -1,9 +1,22 @@
 #pragma once
 
+#include <algorithm>
+
 #include "Concepts.hpp"
 #include "Device.hpp"
 
-#include <algorithm>
+namespace enda
+{
+    // Forward declarations
+    template<char OP, ArrayOrScalar L, ArrayOrScalar R>
+    struct expr;
+
+    template<typename F, Array... As>
+    struct expr_call;
+
+    template<char OP, Array A>
+    struct expr_unary;
+} // namespace enda
 
 namespace enda::mem
 {
@@ -53,6 +66,30 @@ namespace enda::mem
     static constexpr AddressSpace get_addr_space<T&> = get_addr_space<T>;
 
     /**
+     * @brief Promotion rules for enda::mem::AddressSpace values.
+     *
+     * @details `Host` and `Device` address spaces are not compatible and will result in a compilation error.
+     *
+     * The promotion rules are as follows:
+     * - `None` -> `Host` -> `Unified`.
+     * - `None` -> `Device` -> `Unified`.
+     *
+     * @tparam A1 First address space.
+     * @tparam A2 Second address space.
+     * @tparam As Remaining address spaces.
+     */
+    template<AddressSpace A1, AddressSpace A2 = None, AddressSpace... As>
+    constexpr AddressSpace combine = []() {
+        static_assert(!(A1 == Host && A2 == Device) && !(A1 == Device && A2 == Host),
+                      "Error in enda::mem::combine: Cannot combine Host and Device address spaces");
+        if constexpr (sizeof...(As) > 0)
+        {
+            return combine<std::max(A1, A2), As...>;
+        }
+        return std::max(A1, A2);
+    }();
+
+    /**
      * @brief Get common address space for a number of given enda::MemoryArray types.
      *
      * @details See enda::mem::combine for how the address spaces are combined.
@@ -94,7 +131,7 @@ namespace enda::mem
     template<AddressSpace... AdrSpcs>
     static const auto check_adr_sp_valid = []() {
         static_assert(((AdrSpcs != None) & ...), "Error in enda::mem::check_adr_sp_valid: Cannot use None address space");
-        static_assert(nda::have_device or ((AdrSpcs == Host) & ...),
+        static_assert(enda::have_device or ((AdrSpcs == Host) & ...),
                       "Error in enda::mem::check_adr_sp_valid: Device address space requires compiling with GPU support.");
     };
 

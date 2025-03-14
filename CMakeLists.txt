@@ -24,4 +24,9 @@ include(DevTools/CMake/ProjectOptions.cmake)
 
 print_project_configuration()
 
-add_subdirectory(Source)
+# add_subdirectory(Source)
+
+if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
+    enable_testing()
+    add_subdirectory(Test)
+endif()

@@ -1,13 +1,12 @@
 #pragma once
 
+#include <cstdlib>
+
 #include "Device.hpp"
 #include "Mem/AddressSpace.hpp"
 
-#include <cstdlib>
-
 namespace enda::mem
 {
-
     /**
      * @brief Call the correct `malloc` function based on the given address space.
      *
@@ -20,11 +19,11 @@ namespace enda::mem
      * @param size Size in bytes to be allocated.
      * @return Pointer to the allocated memory.
      */
-    template<typename AdrSp>
+    template<AddressSpace AdrSp>
     void* malloc(size_t size)
     {
         check_adr_sp_valid<AdrSp>();
-        static_assert(nda::have_device == nda::have_cuda, "Adjust function for new device types");
+        static_assert(enda::have_device == enda::have_cuda, "Adjust function for new device types");
 
         void* ptr = nullptr;
         if constexpr (AdrSp == Host)
@@ -49,14 +48,14 @@ namespace enda::mem
      * - `std::free` for `Host`.
      * - `cudaFree` for `Device` and `Unified`.
      *
-     * @tparam AdrSp nda::mem::AddressSpace.
+     * @tparam AdrSp enda::mem::AddressSpace.
      * @param p Pointer to the memory to be freed.
      */
     template<AddressSpace AdrSp>
     void free(void* p)
     {
         check_adr_sp_valid<AdrSp>();
-        static_assert(nda::have_device == nda::have_cuda, "Adjust function for new device types");
+        static_assert(enda::have_device == enda::have_cuda, "Adjust function for new device types");
 
         if constexpr (AdrSp == Host)
         {
@@ -67,7 +66,5 @@ namespace enda::mem
             device_error_check(cudaFree(p), "cudaFree");
         }
     }
-
-    /** @} */
 
 } // namespace enda::mem

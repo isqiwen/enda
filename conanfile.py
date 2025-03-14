@@ -71,8 +71,3 @@ class Enda(ConanFile):
     def package(self):
         cmake = CMake(self)
         cmake.install()
-
-    # def package_info(self):
-    #     self.cpp_info.libs = [""]
-    #     if self.settings.compiler == "Visual Studio":
-    #         self.cpp_info.cxxflags.append("/Zc:__cplusplus")

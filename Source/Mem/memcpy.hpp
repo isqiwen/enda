@@ -1,40 +1,13 @@
-// Copyright (c) 2022-2023 Simons Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0.txt
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Authors: Miguel Morales, Nils Wentzell
-
-/**
- * @file
- * @brief Provides a generic memcpy and memcpy2D function for different address spaces.
- */
-
 #pragma once
-
-#include "../device.hpp"
-#include "../macros.hpp"
-#include "./address_space.hpp"
 
 #include <cstring>
 
-namespace nda::mem
+#include "Device.hpp"
+#include "Macros.hpp"
+#include "Mem/AddressSpace.hpp"
+
+namespace enda::mem
 {
-
-    /**
-     * @addtogroup mem_utils
-     * @{
-     */
-
     /**
      * @brief Call the correct `memcpy` function based on the given address spaces.
      *
@@ -42,8 +15,8 @@ namespace nda::mem
      * - `std::memcpy` if both address spaces are `Host`.
      * - `cudaMemcpy` for all other combinations.
      *
-     * @tparam DestAdrSp nda::mem::AddressSpace of the destination.
-     * @tparam SrcAdrSp nda::mem::AddressSpace of the source.
+     * @tparam DestAdrSp enda::mem::AddressSpace of the destination.
+     * @tparam SrcAdrSp enda::mem::AddressSpace of the source.
      * @param dest Pointer to the destination memory.
      * @param src Pointer to the source memory.
      * @param count Size in bytes to copy.
@@ -52,7 +25,7 @@ namespace nda::mem
     void memcpy(void* dest, void const* src, size_t count)
     {
         check_adr_sp_valid<DestAdrSp, SrcAdrSp>();
-        static_assert(nda::have_device == nda::have_cuda, "Adjust function for new device types");
+        static_assert(enda::have_device == enda::have_cuda, "Adjust function for new device types");
 
         if constexpr (DestAdrSp == Host && SrcAdrSp == Host)
         {
@@ -76,8 +49,8 @@ namespace nda::mem
      * If both address spaces are `Host`, it simulates the behavior of CUDA's `cudaMemcpy2D` function by making multiple
      * calls to std::memcpy.
      *
-     * @tparam DestAdrSp nda::mem::AddressSpace of the destination.
-     * @tparam SrcAdrSp nda::mem::AddressSpace of the source.
+     * @tparam DestAdrSp enda::mem::AddressSpace of the destination.
+     * @tparam SrcAdrSp enda::mem::AddressSpace of the source.
      * @param dest Pointer to the destination memory.
      * @param dpitch Pitch of destination memory
      * @param src Pointer to the source memory.
@@ -90,7 +63,7 @@ namespace nda::mem
     {
         EXPECTS(width <= dpitch && width <= spitch);
         check_adr_sp_valid<DestAdrSp, SrcAdrSp>();
-        static_assert(nda::have_device == nda::have_cuda, "Adjust function for new device types");
+        static_assert(enda::have_device == enda::have_cuda, "Adjust function for new device types");
 
         if constexpr (DestAdrSp == Host && SrcAdrSp == Host)
         {
@@ -99,12 +72,10 @@ namespace nda::mem
             for (size_t i = 0; i < height; ++i, desti += dpitch, srci += spitch)
                 std::memcpy(desti, srci, width);
         }
-        else if (nda::have_device)
+        else if (enda::have_device)
         {
             device_error_check(cudaMemcpy2D(dest, dpitch, src, spitch, width, height, cudaMemcpyDefault), "cudaMemcpy2D");
         }
     }
 
-    /** @} */
-
-} // namespace nda::mem
+} // namespace enda::mem
