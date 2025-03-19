@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdlib>
+#include <iostream>
+
 namespace enda
 {
     /**
@@ -32,5 +35,13 @@ namespace enda
     inline constexpr bool have_cuda = false;
 
 #endif
+
+    void host_abort(const char* const message)
+    {
+        std::cerr << message << std::endl;
+        ::abort();
+    }
+
+    [[noreturn]] inline void abort(const char* const message) { host_abort(message); }
 
 } // namespace enda

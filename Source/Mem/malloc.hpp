@@ -4,6 +4,7 @@
 
 #include "Device.hpp"
 #include "Mem/AddressSpace.hpp"
+#include "Utility.hpp"
 
 namespace enda::mem
 {
@@ -28,7 +29,7 @@ namespace enda::mem
         void* ptr = nullptr;
         if constexpr (AdrSp == Host)
         {
-            ptr = std::malloc(size);
+            ptr = std::aligned_alloc(k_cache_line, size);
         }
         else if constexpr (AdrSp == Device)
         {

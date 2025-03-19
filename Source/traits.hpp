@@ -76,4 +76,25 @@ namespace enda
      */
     template<typename A>
     using get_value_t = std::decay_t<decltype(get_first_element(std::declval<A const>()))>;
+
+    /**
+     * @brief An empty base class that is not copyable or movable.
+     *
+     * The template parameter prevents multiple empty bases when inheriting multiple classes.
+     */
+    template<typename CRTP>
+    struct immovable
+    {
+        immovable() = default;
+
+        immovable(const immovable&) = delete;
+        immovable(immovable&&)      = delete;
+
+        auto operator=(const immovable&) -> immovable& = delete;
+        auto operator=(immovable&&) -> immovable&      = delete;
+
+        ~immovable() = default;
+    };
+
+    static_assert(std::is_empty_v<immovable<void>>);
 } // namespace enda
