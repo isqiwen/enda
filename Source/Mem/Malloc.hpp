@@ -1,18 +1,26 @@
 #pragma once
 
-#include <cstdlib>
-
 #include "Device.hpp"
 #include "Mem/AddressSpace.hpp"
 #include "Utility.hpp"
 
 namespace enda::mem
 {
+
+#ifdef _MSC_VER
+    #include <malloc.h>
+    inline void* aligned_alloc(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
+    inline void  aligned_free(void* ptr) { _aligned_free(ptr); }
+#else
+    #include <stdlib.h>
+    inline void aligned_free(void* ptr) { free(ptr); }
+#endif
+
     /**
      * @brief Call the correct `malloc` function based on the given address space.
      *
      * @details It makes the following function calls depending on the address space:
-     * - `std::malloc` for `Host`.
+     * - `aligned_alloc` for `Host`.
      * - `cudaMalloc` for `Device`.
      * - `cudaMallocManaged` for `Unified`.
      *
@@ -29,7 +37,7 @@ namespace enda::mem
         void* ptr = nullptr;
         if constexpr (AdrSp == Host)
         {
-            ptr = std::aligned_alloc(k_cache_line, size);
+            ptr = aligned_alloc(k_cache_line, size);
         }
         else if constexpr (AdrSp == Device)
         {
@@ -60,7 +68,7 @@ namespace enda::mem
 
         if constexpr (AdrSp == Host)
         {
-            std::free(p);
+            aligned_free(p);
         }
         else
         {
