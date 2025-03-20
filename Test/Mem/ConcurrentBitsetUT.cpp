@@ -107,7 +107,7 @@ TEST_F(ConcurrentBitsetTest, MultiThreadAcquireRelease)
     for (int i = 0; i < num_threads; ++i)
     {
         std::pair<int, int> result = concurrent_bitset::acquire_bounded_lg2(buffer, bit_bound_lg2, i);
-        ASSERT_EQ(result.first, acquired_bits[i]);        // Should reacquire the previously released bit
+        ASSERT_EQ(result.first, i); // Should reacquire the previously released bit
     }
 }
 
