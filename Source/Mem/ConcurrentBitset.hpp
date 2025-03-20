@@ -45,7 +45,10 @@ namespace enda::mem
         static inline int bit_first_zero(uint32_t value) noexcept
         {
             if (value == std::numeric_limits<uint32_t>::max())
+            {
                 return -1;
+            }
+
             return std::countr_zero(~value);
         }
 
@@ -56,30 +59,32 @@ namespace enda::mem
         //           and the subsequent elements store the bit data.
         //   bit_bound_lg2: exponent such that total bits = 1 << bit_bound_lg2
         //   bit: optional starting hint bit index
-        //   state_header: optional state header to verify
         // Returns:
         //   On success, returns {acquired bit index, current used bit count + 1}.
-        //   On failure, returns (-1,-1), (-2,-2), or (-3,-3) depending on the error.
-        static std::pair<int, int> acquire_bounded_lg2(uint32_t* buffer, uint32_t bit_bound_lg2, uint32_t bit = 0, uint32_t state_header = 0) noexcept
+        //   On failure, returns (-1,-1), (-2,-2) depending on the error.
+        //   if attempt failed due to filled buffer
+        //       bit_count == which_bit == -1
+        //   if attempt failed due to max_bit_count_lg2 < bit_bound_lg2 or (1u << bit_bound_lg2) <= bit
+        //       bit_count == which_bit == -2
+        static std::pair<int, int> acquire_bounded_lg2(uint32_t* buffer, uint32_t bit_bound_lg2, uint32_t bit = 0) noexcept
         {
             using result_type         = std::pair<int, int>;
             const uint32_t bit_bound  = 1u << bit_bound_lg2;
             const uint32_t word_count = bit_bound >> bits_per_int_lg2;
 
-            if ((max_bit_count_lg2 < bit_bound_lg2) || (state_header & ~state_header_mask) || (bit_bound < bit))
+            if ((max_bit_count_lg2 < bit_bound_lg2) || (bit_bound <= bit))
             {
-                return {-3, -3};
+                return result_type {-2, -2};
             }
 
             std::atomic_ref<uint32_t> state_ref(buffer[0]);
             uint32_t                  state          = state_ref.fetch_add(1, std::memory_order_relaxed);
-            bool                      state_error    = (state_header != (state & state_header_mask));
             uint32_t                  state_bit_used = state & state_used_mask;
 
-            if (state_error || (bit_bound <= state_bit_used))
+            if (bit_bound <= state_bit_used)
             {
                 state_ref.fetch_sub(1, std::memory_order_relaxed);
-                return state_error ? result_type {-2, -2} : result_type {-1, -1};
+                return result_type {-1, -1};
             }
 
             std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -108,29 +113,23 @@ namespace enda::mem
             }
         }
 
-        // Release a previously acquired bit.
-        // Returns:
-        //   On success, returns the current used count (>=0);
-        //   returns -1 if the bit was already released;
-        //   returns -2 if the state header does not match.
-        static std::pair<int, int> acquire_bounded(uint32_t* buffer, uint32_t bit_bound, uint32_t bit = 0, uint32_t state_header = 0) noexcept
+        static std::pair<int, int> acquire_bounded(uint32_t* buffer, uint32_t bit_bound, uint32_t bit = 0) noexcept
         {
             using result_type = std::pair<int, int>;
-            if ((max_bit_count < bit_bound) || (state_header & ~state_header_mask) || (bit_bound <= bit))
+            if ((max_bit_count < bit_bound) || (bit_bound <= bit))
             {
-                return {-3, -3};
+                return result_type {-2, -2};
             }
 
             const uint32_t            word_count = bit_bound >> bits_per_int_lg2;
             std::atomic_ref<uint32_t> state_ref(buffer[0]);
             uint32_t                  state          = state_ref.fetch_add(1, std::memory_order_relaxed);
-            bool                      state_error    = (state_header != (state & state_header_mask));
             uint32_t                  state_bit_used = state & state_used_mask;
 
-            if (state_error || (bit_bound <= state_bit_used))
+            if (bit_bound <= state_bit_used)
             {
                 state_ref.fetch_sub(1, std::memory_order_relaxed);
-                return state_error ? result_type {-2, -2} : result_type {-1, -1};
+                return result_type {-1, -1};
             }
 
             std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -160,15 +159,15 @@ namespace enda::mem
             }
         }
 
-        // Mark a bit as used (similar to release, but uses fetch_or to set the bit).
-        // Returns the same error codes as release.
-        static int release(uint32_t* buffer, uint32_t bit, uint32_t state_header = 0) noexcept
+        /** Requires : 'bit' previously acquired and has not yet been released.
+         *
+         *  Returns:
+         *    0 <= used count after successful release
+         *    -1 bit was already released
+         */
+        static int release(uint32_t* buffer, uint32_t bit) noexcept
         {
             std::atomic_ref<uint32_t> state_ref(buffer[0]);
-            if (state_header != (state_header_mask & state_ref.load(std::memory_order_relaxed)))
-            {
-                return -2;
-            }
 
             uint32_t                  mask = 1u << (bit & bits_per_int_mask);
             std::atomic_ref<uint32_t> word_ref(buffer[(bit >> bits_per_int_lg2) + 1]);
@@ -183,28 +182,6 @@ namespace enda::mem
             uint32_t count = state_ref.fetch_sub(1, std::memory_order_relaxed);
             std::atomic_thread_fence(std::memory_order_seq_cst);
 
-            return static_cast<int>((count & state_used_mask) - 1);
-        }
-
-        static int set(uint32_t* buffer, uint32_t bit, uint32_t state_header = 0) noexcept
-        {
-            std::atomic_ref<uint32_t> state_ref(buffer[0]);
-            if (state_header != (state_header_mask & state_ref.load(std::memory_order_relaxed)))
-            {
-                return -2;
-            }
-
-            uint32_t                  mask = 1u << (bit & bits_per_int_mask);
-            std::atomic_ref<uint32_t> word_ref(buffer[(bit >> bits_per_int_lg2) + 1]);
-            uint32_t                  prev = word_ref.fetch_or(mask, std::memory_order_relaxed);
-
-            if ((prev & mask) == 0)
-            {
-                return -1;
-            }
-
-            std::atomic_thread_fence(std::memory_order_seq_cst);
-            uint32_t count = state_ref.fetch_sub(1, std::memory_order_relaxed);
             return static_cast<int>((count & state_used_mask) - 1);
         }
     };

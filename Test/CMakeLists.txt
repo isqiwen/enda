@@ -35,6 +35,8 @@ foreach(file ${test_sources})
         message(FATAL_ERROR "No valid unit test framework configured.")
     endif()
 
+    target_compile_options(${test_name} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+
     get_filename_component(test_dir ${file} DIRECTORY)
     source_group("src" FILES ${file})
 

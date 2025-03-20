@@ -87,8 +87,7 @@ namespace enda::mem
     };
 
     /**
-     * @brief Compute the smallest exponent 'exp' such that 2^exp >= n.
-     * @param n enda::mem::blk_t memory block to deallocate.
+     * Compute the smallest exponent 'exp' such that 2^exp >= n.
      */
     constexpr uint32_t integral_power_of_two_that_contains(size_t n) noexcept
     {
@@ -100,6 +99,22 @@ namespace enda::mem
             power <<= 1;
         }
         return exp;
+    }
+
+    constexpr uint64_t clock_tic() noexcept
+    {
+#if defined(__i386__) || defined(__x86_64)
+
+        // Return value of 64-bit hi-res clock register.
+
+        unsigned a = 0, d = 0;
+
+        __asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
+
+        return ((uint64_t)a) | (((uint64_t)d) << 32);
+#else
+        return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+#endif
     }
 
     //==============================================================================
@@ -345,7 +360,9 @@ namespace enda::mem
             }
 
             if (alloc_size == 0)
+            {
                 return nullptr;
+            }
 
             void*          p              = nullptr;
             const uint32_t block_size_lg2 = get_block_size_lg2(static_cast<uint32_t>(alloc_size));
@@ -365,38 +382,164 @@ namespace enda::mem
             volatile uint32_t* const hint_sb_id_ptr   = m_sb_state_array + m_hint_offset + block_size_index * s_hint_per_block_size;
             const int32_t            sb_id_begin      = static_cast<const int32_t>(hint_sb_id_ptr[1]);
 
-            // Use current steady_clock time as a pseudo-random hint.
-            uint32_t  block_id_hint     = static_cast<uint32_t>(std::chrono::steady_clock::now().time_since_epoch().count());
-            uint32_t  sb_state_expected = block_state;
-            int32_t   sb_id             = -1;
-            uint32_t* sb_state_array    = nullptr;
+            uint32_t           block_id_hint  = static_cast<uint32_t>(clock_tic());
+            uint32_t           sb_state       = block_state;
+            int32_t            sb_id          = -1;
+            volatile uint32_t* sb_state_array = nullptr;
 
             while (attempt_limit > 0)
             {
+                int32_t hint_sb_id = -1;
+
                 if (sb_id < 0)
                 {
-                    sb_id          = static_cast<int32_t>(hint_sb_id_ptr[0]);
-                    sb_state_array = m_sb_state_array + sb_id * m_sb_state_size;
+                    // No superblock specified, try the hint for this block size
+                    sb_id = hint_sb_id = int32_t(*hint_sb_id_ptr);
+                    sb_state_array     = m_sb_state_array + (sb_id * m_sb_state_size);
                 }
+
                 // If the superblock header matches the expected state, try to acquire a block.
-                if ((sb_state_array[0] & m_state_header_mask) == sb_state_expected)
+                if (sb_state == (sb_state_array[0] & s_state_header_mask))
                 {
-                    uint32_t count_lg2 = sb_state_array[0] >> s_state_shift;
-                    uint32_t mask      = (1u << count_lg2) - 1;
-                    auto     res       = concurrent_bitset::acquire_bounded_lg2(sb_state_array, count_lg2, block_id_hint & mask, sb_state_array[0]);
+                    const uint32_t count_lg2 = sb_state_array[0] >> s_state_shift;
+                    const uint32_t mask      = (1u << count_lg2) - 1;
+                    auto           res       = concurrent_bitset::acquire_bounded_lg2(sb_state_array, count_lg2, block_id_hint & mask);
+
                     if (res.first >= 0)
-                    { // Successful acquisition
-                        uint32_t size_lg2 = m_sb_size_lg2 - count_lg2;
-                        p                 = reinterpret_cast<void*>(reinterpret_cast<char*>(m_sb_state_array + m_data_offset) +
+                    {
+                        const uint32_t size_lg2 = m_sb_size_lg2 - count_lg2;
+                        p                       = reinterpret_cast<void*>(reinterpret_cast<char*>(m_sb_state_array + m_data_offset) +
                                                     (static_cast<uint64_t>(sb_id) << m_sb_size_lg2) + (static_cast<uint64_t>(res.first) << size_lg2));
-                        break;
+
+                        break; // Success
                     }
                 }
-                // Simplified: if allocation fails, decrement attempt count (actual implementation would search other superblocks).
-                sb_id = -1;
-                --attempt_limit;
-            }
-            return p;
+
+                //------------------------------------------------------------------
+                // Arrive here if failed to acquire a block.
+                // Must find a new superblock.
+
+                // Start searching at designated index for this block size.
+                // Look for superblock that, in preferential order,
+                // 1) part-full superblock of this block size
+                // 2) empty superblock to claim for this block size
+                // 3) part-full superblock of the next larger block size
+
+                sb_state                = block_state;
+                sb_id                   = -1;
+                bool     update_hint    = false;
+                int32_t  sb_id_empty    = -1;
+                int32_t  sb_id_large    = -1;
+                uint32_t sb_state_large = 0;
+
+                sb_state_array = m_sb_state_array + sb_id_begin * m_sb_state_size;
+
+                for (int32_t i = 0, id = sb_id_begin; i < m_sb_count; ++i)
+                {
+                    // Query state of the candidate superblock.
+                    // Note that the state may change at any moment
+                    // as concurrent allocations and deallocations occur.
+
+                    const uint32_t full_state = *sb_state_array;
+                    const uint32_t used       = full_state & concurrent_bitset::state_used_mask;
+                    const uint32_t state      = full_state & concurrent_bitset::state_header_mask;
+
+                    if (state == block_state)
+                    {
+                        // Superblock is assigned to this block size
+
+                        if (used < block_count)
+                        {
+                            sb_id       = id;
+                            update_hint = (used + 1 < block_count);
+                            break;
+                        }
+                    }
+                    else if (used == 0)
+                    {
+                        // Superblock is empty
+
+                        if (sb_id_empty == -1)
+                        {
+                            // Superblock is not assigned to this block size
+                            // and is the first empty superblock encountered.
+                            // Save this id to use if a partfull superblock is not found.
+
+                            sb_id_empty = id;
+                        }
+                    }
+                    else if ((-1 == sb_id_empty /* have not found an empty */) && (-1 == sb_id_large /* have not found a larger */) &&
+                             (state < block_state /* a larger block */) &&
+                             // is not full:
+                             (used < (1u << (state >> concurrent_bitset::state_shift))))
+                    {
+                        //  First superblock encountered that is
+                        //  larger than this block size and
+                        //  has room for an allocation.
+                        //  Save this id to use of partfull or empty superblock not found
+                        sb_id_large    = id;
+                        sb_state_large = state;
+                    }
+
+                    // Iterate around the superblock array:
+
+                    if (++id < m_sb_count)
+                    {
+                        sb_state_array += m_sb_state_size;
+                    }
+                    else
+                    {
+                        id             = 0;
+                        sb_state_array = m_sb_state_array;
+                    }
+                }
+
+                if (sb_id < 0)
+                {
+                    // Did not find a partfull superblock for this block size.
+
+                    if (sb_id_empty >= 0)
+                    {
+                        // Found first empty superblock following designated superblock
+                        // Attempt to claim it for this block size.
+                        // If the claim fails assume that another thread claimed it
+                        // for this block size and try to use it anyway,
+                        // but do not update hint.
+
+                        sb_id          = sb_id_empty;
+                        sb_state_array = m_sb_state_array + (sb_id * m_sb_state_size);
+
+                        // If successfully changed assignment of empty superblock 'sb_id'
+                        // to this block_size then update the hint.
+
+                        const uint32_t state_empty = (*sb_state_array) & concurrent_bitset::state_header_mask;
+
+                        // If this thread claims the empty block then update the hint
+                        std::atomic_ref<uint32_t> atomic_state(*const_cast<uint32_t*>(sb_state_array));
+                        update_hint = atomic_state.compare_exchange_strong(state_empty, block_state);
+                    }
+                    else if (sb_id_large >= 0)
+                    {
+                        // Found a larger superblock with space available
+                        sb_id          = sb_id_large;
+                        sb_state       = sb_state_large;
+                        sb_state_array = m_sb_state_array + (sb_id * m_sb_state_size);
+                    }
+                    else
+                    {
+                        // Did not find a potentially usable superblock
+                        --attempt_limit;
+                    }
+                }
+
+                if (update_hint)
+                {
+                    std::atomic_ref<uint32_t> atomic_hint(*const_cast<uint32_t*>(hint_sb_id_ptr));
+                    atomic_hint.compare_exchange_strong(uint32_t(*hint_sb_id_ptr), uint32_t(sb_id));
+                }
+            } // end allocation attempt loop
+
+            return blk_t {p, alloc_size};
         }
 
         //--------------------------------------------------------------------------
@@ -417,7 +560,7 @@ namespace enda::mem
             }
             int32_t   sb_id          = static_cast<int32_t>(d) >> m_sb_size_lg2;
             uint32_t* sb_state_array = m_sb_state_array + sb_id * m_sb_state_size;
-            uint32_t  state          = sb_state_array[0] & m_state_header_mask;
+            uint32_t  state          = sb_state_array[0] & s_state_header_mask;
             uint32_t  block_size_lg2 = m_sb_size_lg2 - (state >> s_state_shift);
             // Check if the address is block-aligned.
             if (d & ((1UL << block_size_lg2) - 1))
