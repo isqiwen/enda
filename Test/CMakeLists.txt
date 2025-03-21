@@ -1,5 +1,7 @@
 include_directories(${CMAKE_CURRENT_LIST_DIR}/../Source)
 
+find_package(Boost REQUIRED)
+
 file(GLOB_RECURSE test_sources ${CMAKE_CURRENT_LIST_DIR}/*.cpp )
 
 foreach(file ${test_sources})
@@ -21,6 +23,7 @@ foreach(file ${test_sources})
         target_link_libraries(${test_name}
             PUBLIC
                 ${RUNTIME_TARGET}
+                Boost::thread
                 GTest::GTest
                 GTest::Main
         )

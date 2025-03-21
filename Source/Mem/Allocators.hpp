@@ -457,7 +457,20 @@ namespace enda::mem
             }
 
             // Determine which superblock and block
-            const ptrdiff_t d = reinterpret_cast<char*>(b.ptr) - reinterpret_cast<char*>(m_sb_state_array + m_data_offset);
+            const int64_t d = reinterpret_cast<char*>(b.ptr) - reinterpret_cast<char*>(m_sb_state_array + m_data_offset);
+
+            if (d < 0)
+            {
+                std::cerr << "d < 0" << std::endl;
+            }
+
+            if (static_cast<size_t>(d) >= (static_cast<size_t>(m_sb_count) << m_sb_size_lg2))
+            {
+                std::cerr << "d: " << d << std::endl;
+                std::cerr << "size: " << b.s << std::endl;
+                std::cerr << "execced: " << (static_cast<size_t>(m_sb_count) << m_sb_size_lg2) << std::endl;
+            }
+
             if (d < 0 || static_cast<size_t>(d) >= (static_cast<size_t>(m_sb_count) << m_sb_size_lg2))
             {
                 abort("Pointer out of memory pool bounds.");
@@ -492,6 +505,21 @@ namespace enda::mem
 
                     ok_dealloc_once = 0 <= result;
                 }
+            }
+
+            if (!ok_contains)
+            {
+                std::cerr << "not contains" << std::endl;
+            }
+
+            if (!ok_block_aligned)
+            {
+                std::cerr << "not block_aligned" << std::endl;
+            }
+
+            if (!ok_dealloc_once)
+            {
+                std::cerr << "not dealloc_once" << std::endl;
             }
 
             if (!ok_contains || !ok_block_aligned || !ok_dealloc_once)

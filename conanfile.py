@@ -27,7 +27,8 @@ class Enda(ConanFile):
     }
 
     requires = [
-        "zlib/1.3.1"
+        "zlib/1.3.1",
+        "boost/1.76.0"
     ]
 
     # tool_requires = [
@@ -45,8 +46,8 @@ class Enda(ConanFile):
             del self.options.fPIC
 
     def configure(self):
-        self.options["spdlog"].header_only = True
-        # self.options["sol2"].with_lua = "luajit"
+        self.options["boost"].shared = False
+        self.options["boost"].without_thread = False
 
     def layout(self):
         cmake_layout(self)
