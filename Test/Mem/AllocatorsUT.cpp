@@ -32,8 +32,8 @@ TEST_F(AllocatorTest, Mallocator_ZeroAllocation)
 {
     mallocator<> alloc;
     blk_t        b = alloc.allocate(0);
-    // malloc may return a valid pointer or nullptr for zero size
-    alloc.deallocate(b); // Should not crash
+    ASSERT_EQ(b.ptr, nullptr) << "Zero allocation failed";
+    alloc.deallocate(b);
 }
 
 TEST_F(AllocatorTest, Mallocator_LargeAllocation)
@@ -73,7 +73,7 @@ TEST_F(AllocatorTest, Mallocator_Multithreaded)
 //--------------------------------------------------------------------------
 TEST_F(AllocatorTest, MemoryPool_Initialization)
 {
-    MemoryPool pool(1ULL << 20); // 1MB
+    memory_pool pool(1ULL << 20); // 1MB
     ASSERT_GE(pool.capacity(), 1ULL << 20) << "Capacity too small";
     ASSERT_EQ(pool.min_block_size(), 64) << "Default min block size incorrect";
     ASSERT_EQ(pool.max_block_size(), 4096) << "Default max block size incorrect";
@@ -81,17 +81,17 @@ TEST_F(AllocatorTest, MemoryPool_Initialization)
 
 TEST_F(AllocatorTest, MemoryPool_AllocateAndDeallocate)
 {
-    MemoryPool pool(1ULL << 20);
-    blk_t      b = pool.allocate(100);
+    memory_pool pool(1ULL << 20);
+    blk_t       b = pool.allocate(100);
     ASSERT_NE(b.ptr, nullptr) << "Allocation failed";
     pool.deallocate(b);
 }
 
 TEST_F(AllocatorTest, MemoryPool_BoundaryConditions)
 {
-    MemoryPool pool(1ULL << 20);
-    blk_t      b1 = pool.allocate(pool.min_block_size());
-    blk_t      b2 = pool.allocate(pool.max_block_size());
+    memory_pool pool(1ULL << 20);
+    blk_t       b1 = pool.allocate(pool.min_block_size());
+    blk_t       b2 = pool.allocate(pool.max_block_size());
     ASSERT_NE(b1.ptr, nullptr) << "Min block allocation failed";
     ASSERT_NE(b2.ptr, nullptr) << "Max block allocation failed";
     pool.deallocate(b1);
@@ -100,14 +100,14 @@ TEST_F(AllocatorTest, MemoryPool_BoundaryConditions)
 
 TEST_F(AllocatorTest, MemoryPool_OversizedAllocation)
 {
-    MemoryPool pool(1ULL << 20);
+    memory_pool pool(1ULL << 20);
     ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     EXPECT_DEATH(pool.allocate(1ULL << 13), "exceeded specified maximum allocation size");
 }
 
 TEST_F(AllocatorTest, MemoryPool_Multithreaded)
 {
-    MemoryPool               pool(1ULL << 20);
+    memory_pool              pool(1ULL << 20);
     std::vector<std::thread> threads;
     const int                num_threads       = 10;
     const int                allocs_per_thread = 1000;
@@ -131,10 +131,10 @@ TEST_F(AllocatorTest, MemoryPool_Multithreaded)
 
 TEST_F(AllocatorTest, MemoryPool_Statistics)
 {
-    MemoryPool                   pool(1ULL << 20);
+    memory_pool                  pool(1ULL << 20);
     blk_t                        b1 = pool.allocate(100);
     blk_t                        b2 = pool.allocate(200);
-    MemoryPool::usage_statistics stats;
+    memory_pool::usage_statistics stats;
     pool.get_usage_statistics(stats);
     ASSERT_GT(stats.consumed_bytes, 0) << "Consumed bytes should be positive";
     pool.deallocate(b1);
@@ -318,8 +318,8 @@ TEST_F(AllocatorTest, Performance_MallocatorVsMemoryPool)
 
     // MemoryPool
     {
-        MemoryPool pool(1ULL << 30); // 1GB
-        auto       start = std::chrono::high_resolution_clock::now();
+        memory_pool pool(1ULL << 30); // 1GB
+        auto        start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < num_allocs; ++i)
         {
             blk_t b = pool.allocate(size);
@@ -363,7 +363,7 @@ TEST_F(AllocatorTest, Performance_Multithreaded)
 
     // MemoryPool
     {
-        MemoryPool               pool(1ULL << 30); // 1GB
+        memory_pool              pool(1ULL << 30); // 1GB
         auto                     start = std::chrono::high_resolution_clock::now();
         std::vector<std::thread> threads;
         for (int i = 0; i < num_threads; ++i)

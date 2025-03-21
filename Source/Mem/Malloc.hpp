@@ -34,6 +34,11 @@ namespace enda::mem
         check_adr_sp_valid<AdrSp>();
         static_assert(enda::have_device == enda::have_cuda, "Adjust function for new device types");
 
+        if (0 == size)
+        {
+            return nullptr;
+        }
+
         void* ptr = nullptr;
         if constexpr (AdrSp == Host)
         {

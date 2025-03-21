@@ -85,9 +85,9 @@ namespace enda::mem
     }
 
     //==============================================================================
-    // MemoryPool
+    // memory_pool
     //
-    // The MemoryPool divides a large memory block into several "superblocks", each
+    // The memory_pool divides a large memory block into several "superblocks", each
     // of which is subdivided into equally sized "blocks". Each superblock maintains
     // a concurrent bitset state to mark whether each block is allocated.
     //
@@ -116,7 +116,7 @@ namespace enda::mem
     // +--------------------------------------------------------------+
     //
     //==============================================================================
-    class MemoryPool : public immovable<MemoryPool>
+    class memory_pool : public immovable<memory_pool>
     {
     public:
         // Structure to hold memory pool usage statistics.
@@ -144,7 +144,7 @@ namespace enda::mem
         //   max_block_alloc_size: Maximum block allocation size in bytes (default 4KB).
         //   min_superblock_size: Minimum superblock size in bytes (default 1MB).
         //--------------------------------------------------------------------------
-        MemoryPool(size_t min_total_alloc_size, size_t min_block_alloc_size = 0, size_t max_block_alloc_size = 0, size_t min_superblock_size = 0)
+        memory_pool(size_t min_total_alloc_size, size_t min_block_alloc_size = 0, size_t max_block_alloc_size = 0, size_t min_superblock_size = 0)
         {
             // Alignment requirements: align to 16 uint32_t elements.
             constexpr uint32_t int_align_lg2               = 4;
@@ -186,9 +186,12 @@ namespace enda::mem
             m_max_block_size_lg2 = integral_power_of_two_that_contains(max_block_alloc_size);
             m_sb_size_lg2        = integral_power_of_two_that_contains(min_superblock_size);
 
+            // Compute the number of different block sizes.
+            int32_t number_block_sizes = 1 + m_max_block_size_lg2 - m_min_block_size_lg2;
+
             // Compute the number of superblocks needed to cover min_total_alloc_size.
             uint64_t sb_size = 1UL << m_sb_size_lg2;
-            m_sb_count       = static_cast<int32_t>((min_total_alloc_size + sb_size - 1) >> m_sb_size_lg2);
+            m_sb_count       = std::max(static_cast<int32_t>((min_total_alloc_size + sb_size - 1) >> m_sb_size_lg2), number_block_sizes);
 
             // Compute the size of each superblock's state area using concurrent_bitset::buffer_bound_lg2.
             uint32_t max_block_count_lg2 = m_sb_size_lg2 - m_min_block_size_lg2;
@@ -200,8 +203,6 @@ namespace enda::mem
             // Compute the total state area size (in uint32_t elements).
             uint32_t all_sb_state_size = (m_sb_count * m_sb_state_size + int_align_mask) & ~int_align_mask;
 
-            // Compute the number of different block sizes.
-            int32_t number_block_sizes = 1 + m_max_block_size_lg2 - m_min_block_size_lg2;
             // Hint array size: one uint32_t per block size, aligned.
             int32_t block_size_array_size = (number_block_sizes + int_align_mask) & ~int_align_mask;
 
@@ -248,7 +249,7 @@ namespace enda::mem
         {
             if (alloc_size > (1UL << m_max_block_size_lg2))
             {
-                abort("enda MemoryPool allocation request exceeded specified maximum allocation size");
+                abort("memory_pool::allocation request exceeded specified maximum allocation size");
             }
 
             if (alloc_size == 0)
@@ -495,7 +496,7 @@ namespace enda::mem
 
             if (!ok_contains || !ok_block_aligned || !ok_dealloc_once)
             {
-                abort("MemoryPool::deallocate given erroneous pointer");
+                abort("memory_pool::deallocate given erroneous pointer");
             }
         }
 
@@ -547,16 +548,21 @@ namespace enda::mem
                 uint32_t* sb_state        = m_sb_state_array + i * m_sb_state_size;
                 uint32_t  state           = sb_state[0];
                 uint32_t  block_count_lg2 = state >> concurrent_bitset::state_shift;
+
                 if (block_count_lg2)
                 {
                     uint32_t block_count = 1u << block_count_lg2;
                     uint32_t block_size  = 1u << (m_sb_size_lg2 - block_count_lg2);
                     uint32_t block_used  = state & concurrent_bitset::state_used_mask;
-                    stats.consumed_superblocks++;
                     stats.consumed_blocks += block_used;
                     stats.consumed_bytes += static_cast<size_t>(block_used) * block_size;
-                    stats.reserved_blocks += block_count - block_used;
-                    stats.reserved_bytes += static_cast<size_t>(block_count - block_used) * block_size;
+                    stats.reserved_blocks += (block_count - block_used);
+                    stats.reserved_bytes += (block_count - block_used) * block_size;
+
+                    if (block_used > 0)
+                    {
+                        stats.consumed_superblocks++;
+                    }
                 }
             }
         }
@@ -565,7 +571,7 @@ namespace enda::mem
         // Print the memory pool state to the provided output stream.
         void print_state(std::ostream& os) const
         {
-            os << "MemoryPool state:\n";
+            os << "memory_pool state:\n";
             os << "    Pool size (bytes):" << (size_t(m_sb_count) << m_sb_size_lg2) << "\n";
             os << "    Superblock count: " << m_sb_count << "\n";
             os << "    Superblock size (bytes): " << (1UL << m_sb_size_lg2) << "\n";
@@ -619,7 +625,7 @@ namespace enda::mem
             {
                 std::ostringstream msg;
 
-                msg << "MemoryPool size constraint violation";
+                msg << "memory_pool size constraint violation";
 
                 if (size_t(max_superblock_size) < min_superblock_size)
                 {
