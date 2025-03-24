@@ -86,11 +86,11 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
             for (int j = 0; j < alloc_count; ++j)
             {
                 size_t size = dist(gen);
-                blk_t  blk  = mp->allocate(size);
-                // if (blk.ptr)
-                // {
-                //     mp->deallocate(blk);
-                // }
+                blk_t  blk  = mp->allocate(512 * 1024 * 1024);
+                if (blk.ptr)
+                {
+                    mp->deallocate(blk);
+                }
             }
         });
     }
