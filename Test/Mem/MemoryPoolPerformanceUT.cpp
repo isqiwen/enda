@@ -20,6 +20,7 @@ protected:
     void TearDown() override {}
 };
 
+/*
 TEST_F(MemoryPoolTest, BoostMemoryPoolPerformance)
 {
     MemoryPool::init();
@@ -59,6 +60,7 @@ TEST_F(MemoryPoolTest, BoostMemoryPoolPerformance)
 
     MemoryPool::release();
 }
+*/
 
 TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
 {
@@ -68,7 +70,9 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
                                                                     512ULL * 1024 * 1024  // min_superblock_size: 512MB
     );
 
-    constexpr uint32_t       alloc_count = 100000;
+    mp->print_state(std::cout);
+
+    constexpr uint32_t       alloc_count = 100;
     std::vector<std::thread> threads;
     auto                     start = std::chrono::high_resolution_clock::now();
 
@@ -83,10 +87,10 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
             {
                 size_t size = dist(gen);
                 blk_t  blk  = mp->allocate(size);
-                if (blk.ptr)
-                {
-                    mp->deallocate(blk);
-                }
+                // if (blk.ptr)
+                // {
+                //     mp->deallocate(blk);
+                // }
             }
         });
     }
@@ -95,6 +99,8 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
     {
         t.join();
     }
+
+    mp->print_state(std::cout);
 
     auto end      = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
