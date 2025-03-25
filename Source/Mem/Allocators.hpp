@@ -8,6 +8,12 @@
 #include <utility>
 #include <vector>
 
+#ifdef _MSC_VER
+    #include <intrin.h>
+    #pragma intrinsic(_BitScanReverse)
+    #pragma intrinsic(_BitScanReverse64)
+#endif
+
 #include "Exceptions.hpp"
 #include "Macros.hpp"
 #include "Mem/AddressSpace.hpp"
@@ -15,9 +21,9 @@
 #include "Mem/Malloc.hpp"
 #include "Mem/Memset.hpp"
 
-// #ifndef NDEBUG
-#include <iostream>
-// #endif
+#ifndef NDEBUG
+    #include <iostream>
+#endif
 
 namespace enda::mem
 {
@@ -28,7 +34,7 @@ namespace enda::mem
         char* ptr = nullptr;
 
         // Size of the memory block in bytes.
-        size_t s = 0;
+        std::size_t s = 0;
     };
 
     /**
@@ -43,9 +49,9 @@ namespace enda::mem
         static constexpr auto address_space = AdrSp;
 
         // alloc_size: Size in bytes of the memory to allocate.
-        static blk_t allocate(size_t alloc_size) noexcept { return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size}; }
+        static blk_t allocate(std::size_t alloc_size) noexcept { return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size}; }
 
-        static blk_t allocate_zero(size_t alloc_size) noexcept
+        static blk_t allocate_zero(std::size_t alloc_size) noexcept
         {
             blk_t b = allocate(alloc_size);
             memset<address_space>((void*)b.ptr, 0, alloc_size);
@@ -56,16 +62,37 @@ namespace enda::mem
     };
 
     // Compute the smallest exponent 'exp' such that 2^exp >= n.
-    constexpr size_t integral_power_of_two_that_contains(size_t n) noexcept
+    constexpr std::size_t integral_power_of_two_that_contains(std::size_t n) noexcept
     {
-        size_t exp   = 0;
-        size_t power = 1;
-        while (power < n)
+        if (n <= 1)
         {
-            ++exp;
-            power <<= 1;
+            return 0;
         }
-        return exp;
+
+#ifdef _MSC_VER
+        unsigned long index = 0;
+    #if defined(_M_X64) || defined(_M_AMD64)
+        _BitScanReverse64(&index, n - 1);
+    #else
+        _BitScanReverse(&index, n - 1);
+    #endif
+        return index + 1;
+#elif defined(__GNUC__) || defined(__clang__)
+        if (sizeof(std::size_t) <= sizeof(unsigned int))
+        {
+            return std::numeric_limits<unsigned>::digits - __builtin_clz(n - 1);
+        }
+        else if (sizeof(std::size_t) <= sizeof(unsigned long))
+        {
+            return std::numeric_limits<unsigned long>::digits - __builtin_clzl(n - 1);
+        }
+        else
+        {
+            return std::numeric_limits<unsigned long long>::digits - __builtin_clzll(n - 1);
+        }
+#else
+        return std::bit_width(n - 1);
+#endif
     }
 
     constexpr uint64_t clock_tic() noexcept
@@ -76,7 +103,7 @@ namespace enda::mem
 
         unsigned a = 0, d = 0;
 
-        __asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
+        __asm__ volatile("rdtscp" : "=a"(a), "=d"(d));
 
         return ((uint64_t)a) | (((uint64_t)d) << 32);
 #else
@@ -116,22 +143,22 @@ namespace enda::mem
     // +--------------------------------------------------------------+
     //
     //==============================================================================
-    class memory_pool : public immovable<memory_pool>
+    class alignas(k_cache_line) memory_pool : public immovable<memory_pool>
     {
     public:
         // Structure to hold memory pool usage statistics.
         struct usage_statistics
         {
-            size_t capacity_bytes;       // Total capacity in bytes
-            size_t superblock_bytes;     // Bytes per superblock
-            size_t max_block_bytes;      // Maximum block size in bytes
-            size_t min_block_bytes;      // Minimum block size in bytes
-            size_t capacity_superblocks; // Number of superblocks
-            size_t consumed_superblocks; // Superblocks assigned to allocations
-            size_t consumed_blocks;      // Number of allocated blocks
-            size_t consumed_bytes;       // Total allocated bytes
-            size_t reserved_blocks;      // Unallocated blocks in superblocks
-            size_t reserved_bytes;       // Unallocated bytes in superblocks
+            std::size_t capacity_bytes;       // Total capacity in bytes
+            std::size_t superblock_bytes;     // Bytes per superblock
+            std::size_t max_block_bytes;      // Maximum block size in bytes
+            std::size_t min_block_bytes;      // Minimum block size in bytes
+            std::size_t capacity_superblocks; // Number of superblocks
+            std::size_t consumed_superblocks; // Superblocks assigned to allocations
+            std::size_t consumed_blocks;      // Number of allocated blocks
+            std::size_t consumed_bytes;       // Total allocated bytes
+            std::size_t reserved_blocks;      // Unallocated blocks in superblocks
+            std::size_t reserved_bytes;       // Unallocated bytes in superblocks
         };
 
         // Only `Host` enda::mem::AddressSpace is supported for this allocator.
@@ -144,14 +171,17 @@ namespace enda::mem
         //   max_block_alloc_size: Maximum block allocation size in bytes (default 4KB).
         //   min_superblock_size: Minimum superblock size in bytes (default 1MB).
         //--------------------------------------------------------------------------
-        memory_pool(size_t min_total_alloc_size, size_t min_block_alloc_size = 0, size_t max_block_alloc_size = 0, size_t min_superblock_size = 0)
+        memory_pool(std::size_t min_total_alloc_size,
+                    std::size_t min_block_alloc_size = 0,
+                    std::size_t max_block_alloc_size = 0,
+                    std::size_t min_superblock_size  = 0)
         {
             // Alignment requirements: align to 16 uint32_t elements.
-            constexpr size_t int_align_lg2               = 4;
-            constexpr size_t int_align_mask              = (1 << int_align_lg2) - 1;
-            constexpr size_t default_min_block_size      = 1u << 6;  // 64 bytes
-            constexpr size_t default_max_block_size      = 1u << 12; // 4096 bytes
-            constexpr size_t default_min_superblock_size = 1u << 20; // 1MB bytes
+            constexpr std::size_t int_align_lg2               = 4;
+            constexpr std::size_t int_align_mask              = (1ULL << int_align_lg2) - 1;
+            constexpr std::size_t default_min_block_size      = 1ULL << 6;  // 64 bytes
+            constexpr std::size_t default_max_block_size      = 1ULL << 12; // 4096 bytes
+            constexpr std::size_t default_min_superblock_size = 1ULL << 20; // 1MB bytes
 
             //--------------------------------------------------
             // Default block and superblock sizes:
@@ -168,8 +198,8 @@ namespace enda::mem
                 //   max_block_per_superblock * min_block_size
                 //   max_superblock_size
                 //   min_total_alloc_size
-                size_t max_superblock_size = min_block_alloc_size * concurrent_bitset::max_bit_count;
-                min_superblock_size        = std::min(max_superblock_size, std::min((size_t)s_max_superblock_size, min_total_alloc_size));
+                std::size_t max_superblock_size = min_block_alloc_size * concurrent_bitset::max_bit_count;
+                min_superblock_size             = std::min(max_superblock_size, std::min((std::size_t)s_max_superblock_size, min_total_alloc_size));
             }
 
             if (0 == max_block_alloc_size)
@@ -184,58 +214,71 @@ namespace enda::mem
             m_min_block_size_lg2 = integral_power_of_two_that_contains(min_block_alloc_size);
             m_sb_size_lg2        = integral_power_of_two_that_contains(min_superblock_size);
 
-            m_min_block_size = 1 << m_min_block_size_lg2;
-            m_max_block_size = 1 << m_max_block_size_lg2;
-            m_sb_size        = 1 << m_sb_size_lg2;
+            m_min_block_size = 1ULL << m_min_block_size_lg2;
+            m_max_block_size = 1ULL << m_max_block_size_lg2;
+            m_sb_size        = 1ULL << m_sb_size_lg2;
 
             // Compute the number of different block sizes.
-            size_t number_block_sizes = 1 + m_max_block_size_lg2 - m_min_block_size_lg2;
+            std::size_t number_block_sizes = 1 + m_max_block_size_lg2 - m_min_block_size_lg2;
 
             // Compute the number of superblocks needed to cover min_total_alloc_size.
-            m_sb_size  = 1 << m_sb_size_lg2;
+            m_sb_size  = 1ULL << m_sb_size_lg2;
             m_sb_count = std::max((min_total_alloc_size + m_sb_size - 1) >> m_sb_size_lg2, number_block_sizes);
 
             // Compute the size of each superblock's state area using concurrent_bitset::buffer_bound_lg2.
-            size_t max_block_count_lg2 = m_sb_size_lg2 - m_min_block_size_lg2;
-            size_t cb_size             = concurrent_bitset::buffer_bound_lg2(max_block_count_lg2);
+            std::size_t max_block_count_lg2 = m_sb_size_lg2 - m_min_block_size_lg2;
+            std::size_t cb_size             = concurrent_bitset::buffer_bound_lg2(max_block_count_lg2);
             // Round a value X up to the smallest multiple of the alignment boundary A (where A must be a power of 2):
             // aligned(X,A) = (X+(A−1)) & ∼(A−1)
             m_sb_state_size = (cb_size + int_align_mask) & ~int_align_mask;
 
             // Compute the total state area size (in uint32_t elements).
-            size_t all_sb_state_size = (m_sb_count * m_sb_state_size + int_align_mask) & ~int_align_mask;
+            std::size_t all_sb_state_size = (m_sb_count * m_sb_state_size + int_align_mask) & ~int_align_mask;
 
             // Hint array size: one uint32_t per block size, aligned.
-            size_t block_size_array_size = (number_block_sizes + int_align_mask) & ~int_align_mask;
+            std::size_t block_size_array_size = (number_block_sizes + int_align_mask) & ~int_align_mask;
 
             m_hint_offset = all_sb_state_size;
             m_data_offset = m_hint_offset + block_size_array_size * s_hint_per_block_size;
 
             // Compute total allocation size: header area + superblock data area.
-            size_t header_size      = m_data_offset * sizeof(uint32_t);
+            std::size_t header_size = m_data_offset * sizeof(uint32_t);
             m_pool_capacity         = m_sb_count << m_sb_size_lg2;
-            size_t alloc_size_total = header_size + m_pool_capacity;
 
-            m_buffer = (char*)malloc<address_space>(alloc_size_total);
+            if (header_size > std::numeric_limits<std::size_t>::max() - m_pool_capacity)
+            {
+                throw std::overflow_error("Total allocation size exceeds std::size_t limit");
+            }
+
+            std::size_t alloc_size_total = header_size + m_pool_capacity;
+
+            void* raw_buffer = malloc<address_space>(alloc_size_total);
+
+            if (!raw_buffer)
+            {
+                throw std::bad_alloc();
+            }
 
             // Initialize the header area to 0.
-            memset<address_space>(m_buffer, 0, header_size);
+            memset<address_space>(raw_buffer, 0, header_size);
 
-            m_sb_state_array = reinterpret_cast<uint32_t*>(m_buffer);
+            m_buffer.reset(raw_buffer);
+
+            m_sb_state_array = reinterpret_cast<uint32_t*>(m_buffer.get());
 
             // Initialize each superblock's state and the Hint array for each block size.
-            for (size_t i = 0; i < number_block_sizes; ++i)
+            for (std::size_t i = 0; i < number_block_sizes; ++i)
             {
-                size_t block_size_lg2            = i + m_min_block_size_lg2;
-                size_t block_count_lg2           = m_sb_size_lg2 - block_size_lg2;
-                size_t block_state               = block_count_lg2 << concurrent_bitset::state_shift;
-                size_t hint_begin                = m_hint_offset + i * s_hint_per_block_size;
-                size_t jbeg                      = (i * m_sb_count) / number_block_sizes;
-                size_t jend                      = ((i + 1) * m_sb_count) / number_block_sizes;
+                std::size_t block_size_lg2       = i + m_min_block_size_lg2;
+                std::size_t block_count_lg2      = m_sb_size_lg2 - block_size_lg2;
+                std::size_t block_state          = block_count_lg2 << concurrent_bitset::state_shift;
+                std::size_t hint_begin           = m_hint_offset + i * s_hint_per_block_size;
+                std::size_t jbeg                 = (i * m_sb_count) / number_block_sizes;
+                std::size_t jend                 = ((i + 1) * m_sb_count) / number_block_sizes;
                 m_sb_state_array[hint_begin]     = static_cast<uint32_t>(jbeg);
                 m_sb_state_array[hint_begin + 1] = static_cast<uint32_t>(jbeg);
 
-                for (size_t j = jbeg; j < jend; ++j)
+                for (std::size_t j = jbeg; j < jend; ++j)
                 {
                     m_sb_state_array[j * m_sb_state_size] = static_cast<uint32_t>(block_state);
                 }
@@ -249,7 +292,7 @@ namespace enda::mem
         //  currently is 64 bytes.
         //
         //--------------------------------------------------------------------------
-        blk_t allocate(size_t alloc_size) noexcept
+        blk_t allocate(std::size_t alloc_size) noexcept
         {
             if (alloc_size > m_max_block_size)
             {
@@ -261,20 +304,20 @@ namespace enda::mem
                 return blk_t {nullptr, 0};
             }
 
-            char*  p              = nullptr;
-            size_t block_size_lg2 = get_block_size_lg2(alloc_size);
+            char*       p              = nullptr;
+            std::size_t block_size_lg2 = get_block_size_lg2(alloc_size);
 
             // Allocation will fit within a superblock that has block sizes ( 1 << block_size_lg2 )
-            size_t   block_count_lg2 = m_sb_size_lg2 - block_size_lg2;
-            size_t   block_count     = 1 << block_count_lg2;
-            uint32_t block_state     = block_count_lg2 << concurrent_bitset::state_shift;
+            std::size_t block_count_lg2 = m_sb_size_lg2 - block_size_lg2;
+            std::size_t block_count     = 1ULL << block_count_lg2;
+            uint32_t    block_state     = block_count_lg2 << concurrent_bitset::state_shift;
 
             // Superblock hints for this block size:
             //   hint_sb_id_ptr[0] is the dynamically changing hint
             //   hint_sb_id_ptr[1] is the static start point
 
             // Get the Hint pointer for the corresponding block size.
-            size_t          block_size_index = block_size_lg2 - m_min_block_size_lg2;
+            std::size_t     block_size_index = block_size_lg2 - m_min_block_size_lg2;
             uint32_t* const hint_sb_id_ptr   = m_sb_state_array + m_hint_offset + block_size_index * s_hint_per_block_size;
             const uint32_t  sb_id_begin      = static_cast<const uint32_t>(hint_sb_id_ptr[1]);
 
@@ -283,7 +326,7 @@ namespace enda::mem
             int32_t   sb_id          = -1;
             uint32_t* sb_state_array = nullptr;
 
-            int32_t attempt_limit = 1;
+            int32_t attempt_limit = 10;
 
             while (attempt_limit > 0)
             {
@@ -306,8 +349,17 @@ namespace enda::mem
                     if (res.first >= 0)
                     {
                         const uint32_t size_lg2 = m_sb_size_lg2 - count_lg2;
-                        p                       = reinterpret_cast<char*>(m_sb_state_array + m_data_offset) + (static_cast<size_t>(sb_id) << m_sb_size_lg2) +
-                            (static_cast<size_t>(res.first) << size_lg2);
+                        p = reinterpret_cast<char*>(m_sb_state_array + m_data_offset) + (static_cast<std::size_t>(sb_id) << m_sb_size_lg2) +
+                            (static_cast<std::size_t>(res.first) << size_lg2);
+
+                        ptrdiff_t d = p - reinterpret_cast<char*>(m_sb_state_array + m_data_offset);
+                        if (d == m_pool_capacity)
+                        {
+                            std::cout << "sb_id: " << sb_id << std::endl;
+                            std::cout << "res.first: " << res.first << std::endl;
+                            std::cout << "size_lg2: " << size_lg2 << std::endl;
+                            std::cout << "m_sb_size_lg2: " << m_sb_size_lg2 << std::endl;
+                        }
 
                         break; // Success
                     }
@@ -332,7 +384,7 @@ namespace enda::mem
 
                 sb_state_array = m_sb_state_array + sb_id_begin * m_sb_state_size;
 
-                for (size_t id = sb_id_begin; id < m_sb_count;)
+                for (std::size_t id = sb_id_begin; id < m_sb_count;)
                 {
                     // Query state of the candidate superblock.
                     // Note that the state may change at any moment
@@ -435,7 +487,7 @@ namespace enda::mem
             return blk_t {p, p == nullptr ? 0 : alloc_size};
         }
 
-        blk_t allocate_zero(size_t alloc_size) noexcept
+        blk_t allocate_zero(std::size_t alloc_size) noexcept
         {
             blk_t b = allocate(alloc_size);
             memset<address_space>((void*)b.ptr, 0, alloc_size);
@@ -454,51 +506,43 @@ namespace enda::mem
             }
 
             // Determine which superblock and block
-            size_t d = reinterpret_cast<char*>(b.ptr) - reinterpret_cast<char*>(m_sb_state_array + m_data_offset);
+            ptrdiff_t d = reinterpret_cast<char*>(b.ptr) - reinterpret_cast<char*>(m_sb_state_array + m_data_offset);
 
-            // Verify contained within the memory pool's superblocks:
-            bool ok_contains      = (0 <= d) && (d + b.s <= m_pool_capacity);
-            bool ok_block_aligned = 0;
-            bool ok_dealloc_once  = 0;
-
-            if (ok_contains)
+            if (d < 0 || d > m_pool_capacity - b.s)
             {
-                size_t sb_id = d >> m_sb_size_lg2;
-
-                // State array for the superblock.
-                uint32_t* const sb_state_array = m_sb_state_array + (sb_id * m_sb_state_size);
-
-                const uint32_t block_state    = (*sb_state_array) & concurrent_bitset::state_header_mask;
-                const size_t   block_size_lg2 = m_sb_size_lg2 - (block_state >> concurrent_bitset::state_shift);
-
-                ok_block_aligned = 0 == (d & ((1 << block_size_lg2) - 1));
-
-                if (ok_block_aligned)
-                {
-                    // Map address to block's bit
-                    // mask into superblock and then shift down for block index
-                    const uint32_t bit = (d & (m_sb_size - 1)) >> block_size_lg2;
-
-                    const int result = concurrent_bitset::release(sb_state_array, bit);
-
-                    ok_dealloc_once = 0 <= result;
-                }
+                abort("Offset overflow in deallocate");
             }
 
-            if (!ok_contains || !ok_block_aligned || !ok_dealloc_once)
+            std::size_t sb_id = d >> m_sb_size_lg2;
+
+            // State array for the superblock.
+            uint32_t* const sb_state_array = m_sb_state_array + (sb_id * m_sb_state_size);
+
+            const uint32_t    block_state    = (*sb_state_array) & concurrent_bitset::state_header_mask;
+            const std::size_t block_size_lg2 = m_sb_size_lg2 - (block_state >> concurrent_bitset::state_shift);
+
+            // Map address to block's bit
+            // mask into superblock and then shift down for block index
+            const uint32_t bit = (d & (m_sb_size - 1)) >> block_size_lg2;
+
+            const int result = concurrent_bitset::release(sb_state_array, bit);
+
+            bool ok_dealloc_once = 0 <= result;
+
+            if (!ok_dealloc_once)
             {
-                abort("memory_pool::deallocate given erroneous pointer");
+                abort("memory_pool::deallocate ok_dealloc_once is false.");
             }
         }
 
         // Returns the total capacity (in bytes) of the memory pool.
-        inline size_t capacity() const noexcept { return m_pool_capacity; }
+        inline std::size_t capacity() const noexcept { return m_pool_capacity; }
 
         // Returns the minimum block size in bytes.
-        inline size_t min_block_size() const noexcept { return m_min_block_size; }
+        inline std::size_t min_block_size() const noexcept { return m_min_block_size; }
 
         // Returns the maximum block size in bytes.
-        inline size_t max_block_size() const noexcept { return m_max_block_size; }
+        inline std::size_t max_block_size() const noexcept { return m_max_block_size; }
 
         // Returns the number of superblocks.
         inline int number_of_superblocks() const noexcept { return m_sb_count; }
@@ -514,8 +558,8 @@ namespace enda::mem
             const uint32_t block_count_lg2 = state >> concurrent_bitset::state_shift;
             const uint32_t block_used      = state & concurrent_bitset::state_used_mask;
 
-            block_size           = 1LU << (m_sb_size_lg2 - block_count_lg2);
-            block_count_capacity = 1LU << block_count_lg2;
+            block_size           = 1ULL << (m_sb_size_lg2 - block_count_lg2);
+            block_count_capacity = 1ULL << block_count_lg2;
             block_count_used     = block_used;
         }
 
@@ -542,11 +586,11 @@ namespace enda::mem
 
                 if (block_count_lg2)
                 {
-                    uint32_t block_count = 1u << block_count_lg2;
-                    uint32_t block_size  = 1u << (m_sb_size_lg2 - block_count_lg2);
+                    uint32_t block_count = 1ULL << block_count_lg2;
+                    uint32_t block_size  = 1ULL << (m_sb_size_lg2 - block_count_lg2);
                     uint32_t block_used  = state & concurrent_bitset::state_used_mask;
                     stats.consumed_blocks += block_used;
-                    stats.consumed_bytes += static_cast<size_t>(block_used) * block_size;
+                    stats.consumed_bytes += static_cast<std::size_t>(block_used) * block_size;
                     stats.reserved_blocks += (block_count - block_used);
                     stats.reserved_bytes += (block_count - block_used) * block_size;
 
@@ -558,7 +602,7 @@ namespace enda::mem
             }
         }
 
-        // #ifndef NDEBUG
+#ifndef NDEBUG
         // Print the memory pool state to the provided output stream.
         void print_state(std::ostream& os) const
         {
@@ -583,13 +627,13 @@ namespace enda::mem
                    << " block_count(" << block_count_used << " / " << block_count_capacity << ")" << "\n";
             }
         }
-        // #endif
+#endif
 
     private:
         // Compute the block size exponent for n (must not be lower than m_min_block_size_lg2).
-        inline size_t get_block_size_lg2(size_t n) const noexcept
+        inline std::size_t get_block_size_lg2(std::size_t n) const noexcept
         {
-            size_t exp = integral_power_of_two_that_contains(n);
+            std::size_t exp = integral_power_of_two_that_contains(n);
             return exp < m_min_block_size_lg2 ? m_min_block_size_lg2 : exp;
         }
 
@@ -601,23 +645,23 @@ namespace enda::mem
          *   min_superblock_size  <= min_block_alloc_size *
          *                           max_block_per_superblock
          */
-        void memory_pool_bounds_verification(size_t min_block_alloc_size,
-                                             size_t max_block_alloc_size,
-                                             size_t min_superblock_size,
-                                             size_t max_superblock_size,
-                                             size_t max_block_per_superblock,
-                                             size_t min_total_alloc_size)
+        void memory_pool_bounds_verification(std::size_t min_block_alloc_size,
+                                             std::size_t max_block_alloc_size,
+                                             std::size_t min_superblock_size,
+                                             std::size_t max_superblock_size,
+                                             std::size_t max_block_per_superblock,
+                                             std::size_t min_total_alloc_size)
         {
-            const size_t max_superblock = min_block_alloc_size * max_block_per_superblock;
+            const std::size_t max_superblock = min_block_alloc_size * max_block_per_superblock;
 
-            if ((size_t(max_superblock_size) < min_superblock_size) || (min_total_alloc_size < min_superblock_size) || (max_superblock < min_superblock_size) ||
-                (min_superblock_size < max_block_alloc_size) || (max_block_alloc_size < min_block_alloc_size))
+            if ((std::size_t(max_superblock_size) < min_superblock_size) || (min_total_alloc_size < min_superblock_size) ||
+                (max_superblock < min_superblock_size) || (min_superblock_size < max_block_alloc_size) || (max_block_alloc_size < min_block_alloc_size))
             {
                 std::ostringstream msg;
 
                 msg << "memory_pool size constraint violation";
 
-                if (size_t(max_superblock_size) < min_superblock_size)
+                if (std::size_t(max_superblock_size) < min_superblock_size)
                 {
                     msg << " : max_superblock_size(" << max_superblock_size << ") < min_superblock_size(" << min_superblock_size << ")";
                 }
@@ -647,26 +691,30 @@ namespace enda::mem
         }
 
     private:
-        char*     m_buffer             = nullptr; // Underlying memory buffer
-        uint32_t* m_sb_state_array     = nullptr; // Pointer to the state array (header)
-        size_t    m_sb_state_size      = 0;       // Number of uint32_t per superblock state
-        size_t    m_sb_size_lg2        = 0;       // Exponent for superblock size (bytes = 1 << m_sb_size_lg2)
-        size_t    m_sb_size            = 0;       // superblock size (in bytes)
-        size_t    m_max_block_size     = 0;       // maximum block size (in bytes)
-        size_t    m_max_block_size_lg2 = 0;
-        size_t    m_min_block_size     = 0; // minimum block size (in bytes)
-        size_t    m_min_block_size_lg2 = 0;
-        size_t    m_sb_count           = 0; // Number of superblocks
-        size_t    m_pool_capacity      = 0; // Memory pool size (in bytes)
-        size_t    m_hint_offset        = 0; // Offset to the Hint array in the state area (in uint32_t)
-        size_t    m_data_offset        = 0; // Offset to the data region in the buffer (in uint32_t)
-        size_t    m_unused_padding     = 0; // Unused padding (for alignment)
+        std::unique_ptr<void, PtrDeleter<address_space>> m_buffer             = nullptr; // Underlying memory buffer
+        uint32_t*                                        m_sb_state_array     = nullptr; // Pointer to the state array (header)
+        std::size_t                                      m_sb_state_size      = 0;       // Number of uint32_t per superblock state
+        std::size_t                                      m_sb_size_lg2        = 0;       // Exponent for superblock size (bytes = 1 << m_sb_size_lg2)
+        std::size_t                                      m_sb_size            = 0;       // superblock size (in bytes)
+        std::size_t                                      m_max_block_size     = 0;       // maximum block size (in bytes)
+        std::size_t                                      m_max_block_size_lg2 = 0;
+        std::size_t                                      m_min_block_size     = 0; // minimum block size (in bytes)
+        std::size_t                                      m_min_block_size_lg2 = 0;
+        std::size_t                                      m_sb_count           = 0; // Number of superblocks
+        std::size_t                                      m_pool_capacity      = 0; // Memory pool size (in bytes)
+        std::size_t                                      m_hint_offset        = 0; // Offset to the Hint array in the state area (in uint32_t)
+        std::size_t                                      m_data_offset        = 0; // Offset to the data region in the buffer (in uint32_t)
+        std::size_t                                      m_unused_padding     = 0; // Unused padding (for alignment)
+
+        char m_padding[k_cache_line - (sizeof(std::size_t) * 12 + sizeof(uint32_t*) + sizeof(std::unique_ptr<void, PtrDeleter<address_space>>)) % k_cache_line];
 
         // The maximum size of a superblock.
-        static constexpr uint32_t s_max_superblock_size = 1UL << 31; // 2GB
+        static constexpr uint32_t s_max_superblock_size = 1ULL << 31; // 2GB
         // Number of uint32_t elements used per block size in the Hint array.
-        static constexpr size_t s_hint_per_block_size = 2;
+        static constexpr std::size_t s_hint_per_block_size = 2;
     };
+
+    static_assert(sizeof(memory_pool) % k_cache_line == 0);
 
     /**
      * @brief Custom allocator that dispatches memory allocation to one of two allocators based on the size of the memory
@@ -678,7 +726,7 @@ namespace enda::mem
      * @tparam A enda::mem::Allocator for small memory blocks.
      * @tparam B enda::mem::Allocator for big memory blocks.
      */
-    template<size_t Threshold, Allocator A, Allocator B>
+    template<std::size_t Threshold, Allocator A, Allocator B>
     class segregator : public immovable<segregator<Threshold, A, B>>
     {
         // Allocator for small memory blocks.
@@ -700,7 +748,7 @@ namespace enda::mem
          * @param alloc_size Size in bytes of the memory to allocate.
          * @return enda::mem::blk_t memory block.
          */
-        inline blk_t allocate(size_t alloc_size) noexcept { return alloc_size <= Threshold ? small.allocate(alloc_size) : big.allocate(alloc_size); }
+        inline blk_t allocate(std::size_t alloc_size) noexcept { return alloc_size <= Threshold ? small.allocate(alloc_size) : big.allocate(alloc_size); }
 
         /**
          * @brief Allocate memory and set the memory to zero using the small allocator if the size is less than or equal to
@@ -709,7 +757,7 @@ namespace enda::mem
          * @param alloc_size Size in bytes of the memory to allocate.
          * @return enda::mem::blk_t memory block.
          */
-        inline blk_t allocate_zero(size_t alloc_size) noexcept
+        inline blk_t allocate_zero(std::size_t alloc_size) noexcept
         {
             return alloc_size <= Threshold ? small.allocate_zero(alloc_size) : big.allocate_zero(alloc_size);
         }
@@ -723,41 +771,48 @@ namespace enda::mem
         inline void deallocate(blk_t b) noexcept { return b.s <= Threshold ? small.deallocate(b) : big.deallocate(b); }
     };
 
+    struct AllocationRecord
+    {
+        std::size_t size;
+        std::string file;
+        int         line;
+    };
+
     /**
-     * @brief Wrap an allocator to check for memory leaks.
+     * @brief Wrap an allocator to check for memory usage statistics.
      *
      * @details It simply keeps track of the memory currently being used by the allocator, i.e. the total memory allocated
      * minus the total memory deallocated, which should never be smaller than zero and should be exactly zero when the
      * allocator is destroyed.
      *
+     * @details It gathers a histogram of the different allocation sizes. The histogram is a std::vector of size 65, where
+     * element \f$ i \in \{0,...,63\} \f$ contains the number of allocations with a size in the range
+     * \f$ [2^{64-i-1}, 2^{64-i}) \f$ and the last element contains the number of allocations of size zero.
+     *
      * @tparam A enda::mem::Allocator type to wrap.
      */
     template<Allocator A>
-    class leak_check : A
+    class memory_stats : A
     {
-        // Total memory used by the allocator.
-        std::atomic<long> memory_used = 0;
-
     public:
-        /// enda::mem::AddressSpace in which the memory is allocated.
+        // enda::mem::AddressSpace in which the memory is allocated.
         static constexpr auto address_space = A::address_space;
 
-        /**
-         * @brief Destructor that checks for memory leaks.
-         * @details In debug mode, it aborts the program if there is a memory leak.
-         */
-        ~leak_check()
-        {
-#ifndef NDEBUG
-            long mem = memory_used.load(std::memory_order_acquire);
+        using A::A;
 
-            if (mem != 0)
+        ~memory_stats()
+        {
+            std::scoped_lock lock(m_mutex);
+            if (!m_allocations.empty())
             {
-                std::ostringstream info;
-                info << "Memory leak in allocator: " << memory_used << " bytes leaked";
-                abort(info.str().c_str());
+                std::cerr << "Memory leak detected. Leaked allocations:\n";
+                for (const auto& [ptr, record] : m_allocations)
+                {
+                    std::cerr << "  Leaked pointer: " << ptr << ", size: " << record.size << ", allocated at: " << record.file << ":" << record.line << "\n";
+                }
             }
-#endif
+
+            print_histogram(std::cout);
         }
 
         /**
@@ -766,10 +821,25 @@ namespace enda::mem
          * @param alloc_size Size in bytes of the memory to allocate.
          * @return enda::mem::blk_t memory block.
          */
-        inline blk_t allocate(size_t alloc_size) noexcept
+        inline blk_t allocate(std::size_t alloc_size, const char* file, int line) noexcept
         {
             blk_t b = A::allocate(alloc_size);
-            memory_used.fetch_add(static_cast<long>(b.s), std::memory_order_relaxed);
+
+            if (b.ptr)
+            {
+                std::scoped_lock lock(m_mutex);
+                m_allocations.emplace(b.ptr, AllocationRecord {b.s, file, line});
+
+                if (alloc_size == 0)
+                {
+                    m_hist.back() += 1;
+                }
+                else
+                {
+                    m_hist[std::countl_zero(alloc_size)] += 1;
+                }
+            }
+
             return b;
         }
 
@@ -779,10 +849,25 @@ namespace enda::mem
          * @param alloc_size Size in bytes of the memory to allocate.
          * @return enda::mem::blk_t memory block.
          */
-        inline blk_t allocate_zero(size_t alloc_size) noexcept
+        inline blk_t allocate_zero(std::size_t alloc_size, const char* file, int line) noexcept
         {
             blk_t b = A::allocate_zero(alloc_size);
-            memory_used.fetch_add(static_cast<long>(b.s), std::memory_order_relaxed);
+
+            if (b.ptr)
+            {
+                std::scoped_lock lock(m_mutex);
+                m_allocations.emplace(b.ptr, AllocationRecord {b.s, file, line});
+
+                if (alloc_size == 0)
+                {
+                    m_hist.back() += 1;
+                }
+                else
+                {
+                    m_hist[std::countl_zero(alloc_size)] += 1;
+                }
+            }
+
             return b;
         }
 
@@ -793,16 +878,24 @@ namespace enda::mem
          */
         inline void deallocate(blk_t b) noexcept
         {
-            memory_used.fetch_sub(static_cast<long>(b.s), std::memory_order_relaxed);
-            long mem = memory_used.load(std::memory_order_acquire);
-#ifndef NDEBUG
-            if (mem < 0)
+            if (!b.ptr)
             {
-                std::ostringstream info;
-                info << "Memory used by allocator < 0: Memory block to be deleted: b.s = " << b.s << ", b.ptr = " << (void*)b.ptr;
-                abort(info.str().c_str());
+                return;
             }
-#endif
+
+            {
+                std::scoped_lock lock(m_mutex);
+                auto             it = m_allocations.find(b.ptr);
+                if (it != m_allocations.end())
+                {
+                    m_allocations.erase(it);
+                }
+                else
+                {
+                    std::cerr << "Warning: deallocating pointer not found in allocation records.\n";
+                }
+            }
+
             A::deallocate(b);
         }
 
@@ -810,94 +903,47 @@ namespace enda::mem
          * @brief Check if the base allocator is empty.
          * @return True if no memory is currently being used.
          */
-        [[nodiscard]] bool empty() const { return (memory_used.load(std::memory_order_acquire) == 0); }
+        [[nodiscard]] bool empty() const
+        {
+            std::scoped_lock lock(m_mutex);
+            return m_allocations.empty();
+        }
 
         /**
          * @brief Get the total memory used by the base allocator.
          * @return The size of the memory which has been allocated and not yet deallocated.
          */
-        [[nodiscard]] long get_memory_used() const noexcept { return memory_used.load(std::memory_order_acquire); }
-    };
-
-    /**
-     * @brief Wrap an allocator to gather statistics about memory allocation.
-     *
-     * @details It gathers a histogram of the different allocation sizes. The histogram is a std::vector of size 65, where
-     * element \f$ i \in \{0,...,63\} \f$ contains the number of allocations with a size in the range
-     * \f$ [2^{64-i-1}, 2^{64-i}) \f$ and the last element contains the number of allocations of size zero.
-     *
-     * @tparam A enda::mem::Allocator type to wrap.
-     */
-    template<Allocator A>
-    class stats : A
-    {
-        // Histogram of the allocation sizes.
-        std::array<std::atomic<uint64_t>, 65> hist;
-
-    public:
-        /// enda::mem::AddressSpace in which the memory is allocated.
-        static constexpr auto address_space = A::address_space;
-
-        /// Destructor that outputs the statistics about the memory allocation in debug mode.
-        ~stats() { print_histogram(std::cerr); }
-
-        /**
-         * @brief Allocate memory and update the histogram.
-         *
-         * @param alloc_size Size in bytes of the memory to allocate.
-         * @return enda::mem::blk_t memory block.
-         */
-        blk_t allocate(uint64_t alloc_size)
+        [[nodiscard]] long get_memory_used() const noexcept
         {
-            if (alloc_size == 0)
+            std::scoped_lock lock(m_mutex);
+
+            std::size_t used = 0;
+
+            for (auto& v : m_allocations)
             {
-                hist.back().fetch_add(1, std::memory_order_relaxed);
+                used += v.second.size;
             }
-            else
-            {
-                hist[std::countl_zero(alloc_size)].fetch_add(1, std::memory_order_relaxed);
-            }
-            return A::allocate(alloc_size);
+
+            return used;
         }
 
-        /**
-         * @brief Allocate memory, set it to zero and update the histogram.
-         *
-         * @param alloc_size Size in bytes of the memory to allocate.
-         * @return enda::mem::blk_t memory block.
-         */
-        blk_t allocate_zero(uint64_t alloc_size)
-        {
-            if (alloc_size == 0)
-            {
-                hist.back().fetch_add(1, std::memory_order_relaxed);
-            }
-            else
-            {
-                hist[std::countl_zero(alloc_size)].fetch_add(1, std::memory_order_relaxed);
-            }
-            return A::allocate_zero(alloc_size);
-        }
-
-        /**
-         * @brief Deallocate memory.
-         * @param b enda::mem::blk_t memory block to deallocate.
-         */
-        void deallocate(blk_t b) noexcept { A::deallocate(b); }
-
-        /**
-         * @brief Print the histogram to a std::ostream.
-         * @param os std::ostream object to print to.
-         */
         void print_histogram(std::ostream& os) const
         {
             os << "Allocation size histogram :\n";
-            os << "[0, 2^0): " << hist.back().load(std::memory_order_relaxed) << "\n";
+            os << "[0, 2^0): " << m_hist.back() << "\n";
             for (int i = 0; i < 64; ++i)
             {
-                os << "[2^" << i << ", 2^" << (i + 1) << "): " << hist[63 - i].load(std::memory_order_relaxed) << "\n";
+                os << "[2^" << i << ", 2^" << (i + 1) << "): " << m_hist[63 - i] << "\n";
             }
         }
+
+    private:
+        std::unordered_map<void*, AllocationRecord> m_allocations;
+        std::array<std::size_t, 65>                 m_hist; // Histogram of the allocation sizes.
+        std::mutex                                  m_mutex;
     };
+
+#define POOL_ALLOC(pool, size) (pool).allocate(size)
+#define POOL_ALLOC_STATS(pool, size) (pool).allocate((size), __FILE__, __LINE__)
 
 } // namespace enda::mem

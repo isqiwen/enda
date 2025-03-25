@@ -9,7 +9,7 @@ namespace enda::mem
 
 #ifdef _MSC_VER
     #include <malloc.h>
-    inline void* aligned_alloc(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
+    inline void* aligned_alloc(std::size_t alignment, std::size_t size) { return _aligned_malloc(size, alignment); }
     inline void  aligned_free(void* ptr) { _aligned_free(ptr); }
 #else
     #include <stdlib.h>
@@ -29,7 +29,7 @@ namespace enda::mem
      * @return Pointer to the allocated memory.
      */
     template<AddressSpace AdrSp>
-    void* malloc(size_t size)
+    void* malloc(std::size_t size)
     {
         check_adr_sp_valid<AdrSp>();
         static_assert(enda::have_device == enda::have_cuda, "Adjust function for new device types");
@@ -80,5 +80,17 @@ namespace enda::mem
             device_error_check(cudaFree(p), "cudaFree");
         }
     }
+
+    template<AddressSpace AdrSp>
+    struct PtrDeleter
+    {
+        void operator()(void* ptr) const
+        {
+            if (ptr)
+            {
+                free<AdrSp>(ptr);
+            }
+        }
+    };
 
 } // namespace enda::mem

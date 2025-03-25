@@ -110,6 +110,11 @@ namespace enda::mem
                 {
                     bit = (((word + 1) < word_count ? (word + 1) << bits_per_int_lg2 : 0) | (bit & bits_per_int_mask));
                 }
+
+                if (bit >= bit_bound)
+                {
+                    return result_type {-2, -2};
+                }
             }
         }
 

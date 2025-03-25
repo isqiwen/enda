@@ -231,6 +231,7 @@ TEST_F(AllocatorTest, LeakCheck_Leak)
 
 TEST_F(AllocatorTest, LeakCheck_Multithreaded)
 {
+    #define DEBUG_MEMORY_POOL
     LeakCheckAlloc           alloc;
     std::vector<std::thread> threads;
     const int                num_threads       = 10;
@@ -241,7 +242,7 @@ TEST_F(AllocatorTest, LeakCheck_Multithreaded)
         threads.emplace_back([&alloc]() {
             for (int j = 0; j < allocs_per_thread; ++j)
             {
-                blk_t b = alloc.allocate(100);
+                blk_t b = POOL_ALLOC(alloc, 100);
                 alloc.deallocate(b);
             }
         });
