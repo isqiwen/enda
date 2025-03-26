@@ -352,15 +352,6 @@ namespace enda::mem
                         p = reinterpret_cast<char*>(m_sb_state_array + m_data_offset) + (static_cast<std::size_t>(sb_id) << m_sb_size_lg2) +
                             (static_cast<std::size_t>(res.first) << size_lg2);
 
-                        ptrdiff_t d = p - reinterpret_cast<char*>(m_sb_state_array + m_data_offset);
-                        if (d == m_pool_capacity)
-                        {
-                            std::cout << "sb_id: " << sb_id << std::endl;
-                            std::cout << "res.first: " << res.first << std::endl;
-                            std::cout << "size_lg2: " << size_lg2 << std::endl;
-                            std::cout << "m_sb_size_lg2: " << m_sb_size_lg2 << std::endl;
-                        }
-
                         break; // Success
                     }
                 }
@@ -416,6 +407,7 @@ namespace enda::mem
                             // Save this id to use if a partfull superblock is not found.
 
                             sb_id_empty = id;
+                            break;
                         }
                     }
                     else if ((-1 == sb_id_empty /* have not found an empty */) && (-1 == sb_id_large /* have not found a larger */) &&
@@ -531,6 +523,8 @@ namespace enda::mem
 
             if (!ok_dealloc_once)
             {
+                std::cout << "sb_id: " << sb_id << std::endl;
+                std::cout << "bit: " << bit << std::endl;
                 abort("memory_pool::deallocate ok_dealloc_once is false.");
             }
         }

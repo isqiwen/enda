@@ -28,7 +28,7 @@ namespace enda::mem
      * @param size Size in bytes to be allocated.
      * @return Pointer to the allocated memory.
      */
-    template<AddressSpace AdrSp>
+    template<AddressSpace AdrSp, std::size_t Alignment = 0>
     void* malloc(std::size_t size)
     {
         check_adr_sp_valid<AdrSp>();
@@ -42,7 +42,14 @@ namespace enda::mem
         void* ptr = nullptr;
         if constexpr (AdrSp == Host)
         {
-            ptr = aligned_alloc(k_cache_line, size);
+            if constexpr (Alignment == 0)
+            {
+                ptr = std::malloc(size);
+            }
+            else
+            {
+                ptr = aligned_alloc(Alignment, size);
+            }
         }
         else if constexpr (AdrSp == Device)
         {
@@ -65,7 +72,7 @@ namespace enda::mem
      * @tparam AdrSp enda::mem::AddressSpace.
      * @param p Pointer to the memory to be freed.
      */
-    template<AddressSpace AdrSp>
+    template<AddressSpace AdrSp, std::size_t Alignment = 0>
     void free(void* p)
     {
         check_adr_sp_valid<AdrSp>();
@@ -73,7 +80,14 @@ namespace enda::mem
 
         if constexpr (AdrSp == Host)
         {
-            aligned_free(p);
+            if constexpr (Alignment == 0)
+            {
+                std::free(p);
+            }
+            else
+            {
+                aligned_free(p);
+            }
         }
         else
         {
@@ -81,16 +95,18 @@ namespace enda::mem
         }
     }
 
-    template<AddressSpace AdrSp>
-    struct PtrDeleter
+    template<AddressSpace AdrSp, std::size_t Alignment = 0>
+    struct ptr_deleter
     {
         void operator()(void* ptr) const
         {
             if (ptr)
             {
-                free<AdrSp>(ptr);
+                free<AdrSp, Alignment>(ptr);
             }
         }
     };
+
+    bool is_aligned(void* ptr, std::size_t alignment) {return reinterpret_cast<std::uintptr_t>(ptr) % alignment == 0; }
 
 } // namespace enda::mem

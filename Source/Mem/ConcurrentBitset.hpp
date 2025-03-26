@@ -6,6 +6,8 @@
 #include <limits>
 #include <utility>
 
+#include "Utility.hpp"
+
 namespace enda::mem
 {
     //==============================================================================
