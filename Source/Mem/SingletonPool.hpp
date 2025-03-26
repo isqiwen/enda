@@ -108,9 +108,22 @@ namespace enda::mem
 
 } // namespace enda::mem
 
-#define GET_POOL(scale) singleton_pool_##scale::instance()
-
-#define CREATE_POOL(scale, cnt) \
-    struct tag_singleton_pool_##scale \
+#define ENDA_CREATE_POOL(tag, block_size, block_count) \
+    struct tag_singleton_pool_##tag \
     {}; \
-    using singleton_pool_##scale = enda::mem::singleton_pool<tag_singleton_pool_##scale, scale, cnt>;
+    using singleton_pool_##tag = enda::mem::singleton_pool<tag_singleton_pool_##tag, block_size, block_count>;
+
+#define ENDA_GET_POOL(tag) singleton_pool_##tag::instance()
+
+#define ENDA_INIT_POOL(tag) \
+    { \
+        if (!ENDA_GET_POOL(tag).init()) \
+        { \
+            enda::abort(std::string("singleton_pool_") + #tag + " init failed."); \
+        } \
+    }
+
+#define ENDA_RELEASE_POOL(tag) \
+    { \
+        ENDA_GET_POOL(tag).release_memory(); \
+    }

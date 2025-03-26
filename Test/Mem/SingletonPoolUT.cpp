@@ -12,49 +12,49 @@ using namespace enda::mem;
 
 TEST(SingletonPoolTest, SingleThreadAllocFree)
 {
-    CREATE_POOL(6, 4);
-    EXPECT_TRUE(GET_POOL(6).init());
+    ENDA_CREATE_POOL(64B, 6, 4);
+    ENDA_INIT_POOL(64B);
 
     std::vector<char*> blocks;
     for (int i = 0; i < 16; i++)
     {
-        char* p = GET_POOL(6).allocate();
+        char* p = ENDA_GET_POOL(64B).allocate();
         EXPECT_NE(p, nullptr);
         EXPECT_EQ(is_aligned(p, 64), true);
         blocks.push_back(p);
     }
 
-    EXPECT_EQ(GET_POOL(6).allocate(), nullptr);
+    EXPECT_EQ(ENDA_GET_POOL(64B).allocate(), nullptr);
 
     for (char* p : blocks)
     {
-        GET_POOL(6).deallocate(p);
+        ENDA_GET_POOL(64B).deallocate(p);
     }
 
-    char* p = GET_POOL(6).allocate();
+    char* p = ENDA_GET_POOL(64B).allocate();
     EXPECT_NE(p, nullptr);
-    GET_POOL(6).deallocate(p);
+    ENDA_GET_POOL(64B).deallocate(p);
 
-    GET_POOL(6).purge_memory();
+    ENDA_GET_POOL(64B).purge_memory();
     blocks.clear();
     for (int i = 0; i < 16; i++)
     {
-        char* p = GET_POOL(6).allocate();
+        char* p = ENDA_GET_POOL(64B).allocate();
         EXPECT_NE(p, nullptr);
         blocks.push_back(p);
     }
     for (char* p : blocks)
     {
-        GET_POOL(6).deallocate(p);
+        ENDA_GET_POOL(64B).deallocate(p);
     }
 
-    GET_POOL(6).release_memory();
+    ENDA_GET_POOL(64B).release_memory();
 }
 
 TEST(SingletonPoolTest, MultiThreadedAllocFree)
 {
-    CREATE_POOL(7, 10);
-    EXPECT_TRUE(GET_POOL(7).init());
+    ENDA_CREATE_POOL(128B, 7, 8);
+    ENDA_INIT_POOL(128B);
 
     const int thread_count = 8;
     const int iterations   = 1000;
@@ -67,11 +67,11 @@ TEST(SingletonPoolTest, MultiThreadedAllocFree)
         threads.emplace_back([&]() {
             for (int i = 0; i < iterations; i++)
             {
-                char* p = GET_POOL(7).allocate();
+                char* p = ENDA_GET_POOL(128B).allocate();
                 if (p != nullptr)
                 {
                     std::this_thread::yield();
-                    GET_POOL(7).deallocate(p);
+                    ENDA_GET_POOL(128B).deallocate(p);
                     allocCount++;
                 }
                 else
@@ -89,13 +89,13 @@ TEST(SingletonPoolTest, MultiThreadedAllocFree)
 
     EXPECT_GT(allocCount.load(), 0);
 
-    GET_POOL(7).release_memory();
+    ENDA_GET_POOL(128B).release_memory();
 }
 
 TEST(SingletonPoolTest, HighConcurrencyStressTest)
 {
-    CREATE_POOL(8, 10);
-    EXPECT_TRUE(GET_POOL(8).init());
+    ENDA_CREATE_POOL(256B, 8, 10);
+    ENDA_INIT_POOL(256B);
 
     const int thread_count = 16;
     const int iterations   = 10000;
@@ -108,10 +108,10 @@ TEST(SingletonPoolTest, HighConcurrencyStressTest)
         threads.emplace_back([&]() {
             for (int i = 0; i < iterations; i++)
             {
-                char* p = GET_POOL(8).allocate();
+                char* p = ENDA_GET_POOL(256B).allocate();
                 if (p)
                 {
-                    GET_POOL(8).deallocate(p);
+                    ENDA_GET_POOL(256B).deallocate(p);
                     allocCount++;
                 }
                 else
@@ -129,24 +129,24 @@ TEST(SingletonPoolTest, HighConcurrencyStressTest)
 
     EXPECT_GT(allocCount.load(), 0);
 
-    GET_POOL(8).release_memory();
+    ENDA_GET_POOL(256B).release_memory();
 }
 
 TEST(SingletonPoolDeathTest, FreeInvalidPointer)
 {
-    CREATE_POOL(9, 2);
-    EXPECT_TRUE(GET_POOL(9).init());
+    ENDA_CREATE_POOL(512B, 9, 2);
+    ENDA_INIT_POOL(512B);
 
-    char* p = GET_POOL(9).allocate();
+    char* p = ENDA_GET_POOL(512B).allocate();
     ASSERT_NE(p, nullptr);
 
     char* misalignedPtr = p + 1;
-    EXPECT_DEATH({ GET_POOL(9).deallocate(misalignedPtr); }, "Deallocation error: pointer is not aligned to the start of a block.");
+    EXPECT_DEATH({ ENDA_GET_POOL(512B).deallocate(misalignedPtr); }, "Deallocation error: pointer is not aligned to the start of a block.");
 
     char* outsidePtr = p - 1;
-    EXPECT_DEATH({ GET_POOL(9).deallocate(outsidePtr); }, "Deallocation error: pointer offset out of bounds of the memory pool data region.");
+    EXPECT_DEATH({ ENDA_GET_POOL(512B).deallocate(outsidePtr); }, "Deallocation error: pointer offset out of bounds of the memory pool data region.");
 
-    GET_POOL(9).deallocate(p);
+    ENDA_GET_POOL(512B).deallocate(p);
 
-    GET_POOL(9).release_memory();
+    ENDA_GET_POOL(512B).release_memory();
 }

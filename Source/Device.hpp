@@ -44,4 +44,6 @@ namespace enda
 
     [[noreturn]] inline void abort(const char* const message) { host_abort(message); }
 
+    [[noreturn]] inline void abort(const std::string& message) { host_abort(message.c_str()); }
+
 } // namespace enda
