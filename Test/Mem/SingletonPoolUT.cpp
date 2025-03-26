@@ -13,47 +13,48 @@ using namespace enda::mem;
 TEST(SingletonPoolTest, SingleThreadAllocFree)
 {
     CREATE_POOL(6, 4);
-    GET_POOL(6).init();
     EXPECT_TRUE(GET_POOL(6).init());
 
     std::vector<char*> blocks;
     for (int i = 0; i < 16; i++)
     {
-        char* p = GET_POOL(6).malloc();
+        char* p = GET_POOL(6).allocate();
         EXPECT_NE(p, nullptr);
         EXPECT_EQ(is_aligned(p, 64), true);
         blocks.push_back(p);
     }
 
-    EXPECT_EQ(GET_POOL(6).malloc(), nullptr);
+    EXPECT_EQ(GET_POOL(6).allocate(), nullptr);
 
     for (char* p : blocks)
     {
-        GET_POOL(6).free(p);
+        GET_POOL(6).deallocate(p);
     }
 
-    char* p = GET_POOL(6).malloc();
+    char* p = GET_POOL(6).allocate();
     EXPECT_NE(p, nullptr);
-    GET_POOL(6).free(p);
+    GET_POOL(6).deallocate(p);
 
     GET_POOL(6).purge_memory();
     blocks.clear();
     for (int i = 0; i < 16; i++)
     {
-        char* p = GET_POOL(6).malloc();
+        char* p = GET_POOL(6).allocate();
         EXPECT_NE(p, nullptr);
         blocks.push_back(p);
     }
     for (char* p : blocks)
     {
-        GET_POOL(6).free(p);
+        GET_POOL(6).deallocate(p);
     }
+
+    GET_POOL(6).release_memory();
 }
 
-/*
 TEST(SingletonPoolTest, MultiThreadedAllocFree)
 {
-    EXPECT_TRUE(TestPool::init());
+    CREATE_POOL(7, 10);
+    EXPECT_TRUE(GET_POOL(7).init());
 
     const int thread_count = 8;
     const int iterations   = 1000;
@@ -66,11 +67,11 @@ TEST(SingletonPoolTest, MultiThreadedAllocFree)
         threads.emplace_back([&]() {
             for (int i = 0; i < iterations; i++)
             {
-                char* p = TestPool::malloc();
+                char* p = GET_POOL(7).allocate();
                 if (p != nullptr)
                 {
                     std::this_thread::yield();
-                    TestPool::free(p);
+                    GET_POOL(7).deallocate(p);
                     allocCount++;
                 }
                 else
@@ -87,11 +88,14 @@ TEST(SingletonPoolTest, MultiThreadedAllocFree)
     }
 
     EXPECT_GT(allocCount.load(), 0);
+
+    GET_POOL(7).release_memory();
 }
 
 TEST(SingletonPoolTest, HighConcurrencyStressTest)
 {
-    EXPECT_TRUE(TestPool::init());
+    CREATE_POOL(8, 10);
+    EXPECT_TRUE(GET_POOL(8).init());
 
     const int thread_count = 16;
     const int iterations   = 10000;
@@ -104,13 +108,10 @@ TEST(SingletonPoolTest, HighConcurrencyStressTest)
         threads.emplace_back([&]() {
             for (int i = 0; i < iterations; i++)
             {
-                char* p = TestPool::malloc();
+                char* p = GET_POOL(8).allocate();
                 if (p)
                 {
-                    for (volatile int j = 0; j < 100; j++)
-                    {
-                    }
-                    TestPool::free(p);
+                    GET_POOL(8).deallocate(p);
                     allocCount++;
                 }
                 else
@@ -127,20 +128,25 @@ TEST(SingletonPoolTest, HighConcurrencyStressTest)
     }
 
     EXPECT_GT(allocCount.load(), 0);
+
+    GET_POOL(8).release_memory();
 }
 
 TEST(SingletonPoolDeathTest, FreeInvalidPointer)
 {
-    EXPECT_TRUE(TestPool::init());
-    char* p = TestPool::malloc();
+    CREATE_POOL(9, 2);
+    EXPECT_TRUE(GET_POOL(9).init());
+
+    char* p = GET_POOL(9).allocate();
     ASSERT_NE(p, nullptr);
 
     char* misalignedPtr = p + 1;
-    EXPECT_DEATH({ TestPool::free(misalignedPtr); }, "Deallocation error: pointer is not aligned to the start of a block.");
+    EXPECT_DEATH({ GET_POOL(9).deallocate(misalignedPtr); }, "Deallocation error: pointer is not aligned to the start of a block.");
 
-    char* outsidePtr = TestPool::data_buffer() - 1;
-    EXPECT_DEATH({ TestPool::free(outsidePtr); }, "Deallocation error: pointer offset out of bounds of the memory pool data region.");
+    char* outsidePtr = p - 1;
+    EXPECT_DEATH({ GET_POOL(9).deallocate(outsidePtr); }, "Deallocation error: pointer offset out of bounds of the memory pool data region.");
 
-    TestPool::free(p);
+    GET_POOL(9).deallocate(p);
+
+    GET_POOL(9).release_memory();
 }
-*/

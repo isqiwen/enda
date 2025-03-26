@@ -38,9 +38,9 @@ namespace enda::mem
             return true;
         }
 
-        char* malloc() noexcept
+        char* allocate()
         {
-            auto res = concurrent_bitset::acquire_bounded_lg2(status_buffer(), BlockCntL2);
+            auto res = concurrent_bitset::acquire_bounded_lg2(status_buffer(), static_cast<uint32_t>(BlockCntL2));
             int  bit = res.first;
 
             if (bit < 0)
@@ -48,10 +48,10 @@ namespace enda::mem
                 return nullptr;
             }
 
-            return data_buffer() + static_cast<size_type>(bit) << BlockSizeL2;
+            return data_buffer() + (static_cast<size_type>(bit) << BlockSizeL2);
         }
 
-        void free(char* ptr) noexcept
+        void deallocate(char* ptr) noexcept
         {
             if (nullptr == ptr)
             {
@@ -90,9 +90,9 @@ namespace enda::mem
         }
 
     private:
-        inline uint32_t* status_buffer() noexcept { return reinterpret_cast<uint32_t*>(m_buffer); }
+        inline uint32_t* status_buffer() noexcept { return reinterpret_cast<uint32_t*>(m_buffer.get()); }
 
-        inline char* data_buffer() noexcept { return m_buffer + sizeof(uint32_t) * s_bitset_words; }
+        inline char* data_buffer() noexcept { return m_buffer.get() + sizeof(uint32_t) * s_bitset_words; }
 
     private:
         static constexpr auto      s_address_space     = AdrSp;
