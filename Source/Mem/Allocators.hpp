@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -70,9 +71,9 @@ namespace enda::mem
         // enda::mem::AddressSpace in which the memory is allocated.
         static constexpr auto address_space = AdrSp;
 
-        static void init() { return; }
+        static void init() noexcept { return; }
 
-        static void release() { return; }
+        static void release() noexcept { return; }
 
         // alloc_size: Size in bytes of the memory to allocate.
         static blk_t allocate(std::size_t alloc_size) noexcept { return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size}; }
@@ -84,7 +85,7 @@ namespace enda::mem
             return b;
         }
 
-        static void deallocate(blk_t b) noexcept { free<address_space>((void*)b.ptr); }
+        static void deallocate(const blk_t& b) noexcept { free<address_space>((void*)b.ptr); }
     };
 
     constexpr std::size_t _64K_LG2  = 16;
@@ -129,7 +130,7 @@ namespace enda::mem
         ENDA_CREATE_POOL(e256M, _256M_LG2, 5); // 256M *  32 = 8G
         ENDA_CREATE_POOL(e512M, _512M_LG2, 4); // 512M *  16 = 8G
 
-        static void init()
+        static void init() noexcept
         {
             ENDA_INIT_POOL(e64K);
             ENDA_INIT_POOL(e1M);
@@ -144,7 +145,7 @@ namespace enda::mem
             ENDA_INIT_POOL(e512M);
         }
 
-        static void release()
+        static void release() noexcept
         {
             ENDA_RELEASE_POOL(e64K);
             ENDA_RELEASE_POOL(e1M);
@@ -385,13 +386,11 @@ namespace enda::mem
      * @tparam A enda::mem::Allocator type to wrap.
      */
     template<Allocator A>
-    class stats : A
+    class stats : public enda::singleton<stats<A>>
     {
     public:
         // enda::mem::AddressSpace in which the memory is allocated.
         static constexpr auto address_space = A::address_space;
-
-        using A::A;
 
         ~stats()
         {
@@ -408,9 +407,9 @@ namespace enda::mem
             print_histogram(std::cout);
         }
 
-        static void init() { A::init(); }
+        static void init() { s_allocator.init(); }
 
-        static void release() { A::release(); }
+        static void release() { s_allocator.release(); }
 
         /**
          * @brief Allocate memory and update the total memory used.
@@ -420,7 +419,7 @@ namespace enda::mem
          */
         blk_t allocate(std::size_t alloc_size, const char* file, int line) noexcept
         {
-            blk_t b = A::allocate(alloc_size);
+            blk_t b = s_allocator.allocate(alloc_size);
 
             if (b.ptr)
             {
@@ -448,7 +447,7 @@ namespace enda::mem
          */
         blk_t allocate_zero(std::size_t alloc_size, const char* file, int line) noexcept
         {
-            blk_t b = A::allocate_zero(alloc_size);
+            blk_t b = s_allocator.allocate_zero(alloc_size);
 
             if (nullptr != b.ptr)
             {
@@ -473,7 +472,7 @@ namespace enda::mem
          * @details In debug mode, it aborts the program if the total memory used is smaller than zero.
          * @param b enda::mem::blk_t memory block to deallocate.
          */
-        void deallocate(blk_t b) noexcept
+        void deallocate(const blk_t& b) noexcept
         {
             if (nullptr == b.ptr)
             {
@@ -493,7 +492,7 @@ namespace enda::mem
                 }
             }
 
-            A::deallocate(b);
+            s_allocator.deallocate(b);
         }
 
         /**
@@ -536,11 +535,24 @@ namespace enda::mem
 
     private:
         std::unordered_map<void*, AllocationRecord> m_allocations;
-        std::array<std::size_t, 65>                 m_hist; // Histogram of the allocation sizes.
+        std::array<std::size_t, 65>                 m_hist = {0}; // Histogram of the allocation sizes.
         std::mutex                                  m_mutex;
+
+        inline static A& s_allocator = A::instance();
     };
 
-#define POOL_ALLOC(pool, size) (pool).allocate(size)
-#define POOL_ALLOC_STATS(pool, size) (pool).allocate((size), __FILE__, __LINE__)
+#define ENDA_MALLOC(allocator, size) (allocator).allocate(size);
+
+#define ENDA_FREE(allocator, blk) (allocator).deallocate(blk);
+
+#define ENDA_MALLOC_ZERO(allocator, size) (allocator).allocate_zero(size);
+
+#define ENDA_MALLOC_STATS(allocator, size) (allocator).allocate((size), __FILE__, __LINE__);
+
+#define ENDA_MALLOC_ZERO_STATS(allocator, size) (allocator).allocate_zero((size), __FILE__, __LINE__);
+
+#define ENDA_INIT(allocator) (allocator).init();
+
+#define ENDA_RELEASE(allocator) (allocator).release();
 
 } // namespace enda::mem

@@ -108,8 +108,12 @@ namespace enda
                 a.deallocate(std::declval<blk_t>())
             } noexcept;
             {
-                A::address_space
-            } -> std::same_as<AddressSpace const&>;
+                a.init()
+            } noexcept;
+            {
+                a.release()
+            } noexcept;
+            {A::address_space}->std::same_as<AddressSpace const&>;
         };
 
         /**
@@ -132,9 +136,7 @@ namespace enda
             {
                 h.data()
             } noexcept -> std::same_as<T*>;
-            {
-                H::address_space
-            } -> std::same_as<AddressSpace const&>;
+            {H::address_space}->std::same_as<AddressSpace const&>;
         };
 
         /**
@@ -174,12 +176,8 @@ namespace enda
     template<typename A>
     concept Array = requires(A const& a)
     {
-        {
-            a.shape()
-        } -> StdArrayOfLong;
-        {
-            a.size()
-        } -> std::same_as<long>;
+        {a.shape()}->StdArrayOfLong;
+        {a.size()}->std::same_as<long>;
         requires CallableWithLongs<A, get_rank<A>>;
     };
 
@@ -200,14 +198,11 @@ namespace enda
         typename A_t::storage_t;
         requires mem::Handle<typename A_t::storage_t>;
         typename A_t::value_type;
-        {
-            a.data()
-        } -> std::same_as<std::conditional_t<std::is_const_v<std::remove_reference_t<A>> || std::is_const_v<typename A_t::value_type>,
-                                             const get_value_t<A>,
-                                             get_value_t<A>>*>;
-        {
-            a.indexmap().strides()
-        } -> StdArrayOfLong;
+        {a.data()}
+            ->std::same_as<std::conditional_t<std::is_const_v<std::remove_reference_t<A>> || std::is_const_v<typename A_t::value_type>,
+                                              const get_value_t<A>,
+                                              get_value_t<A>>*>;
+        {a.indexmap().strides()}->StdArrayOfLong;
     };
 
     /**

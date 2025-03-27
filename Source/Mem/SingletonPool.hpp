@@ -129,8 +129,6 @@ namespace enda::mem
         char*                                                            m_data_buffer   = nullptr;
     };
 
-} // namespace enda::mem
-
 #define ENDA_CREATE_POOL(tag, block_size, block_count) \
     struct tag_singleton_pool_##tag \
     {}; \
@@ -150,3 +148,4 @@ namespace enda::mem
     { \
         ENDA_GET_POOL(tag).release_memory(); \
     }
+} // namespace enda::mem

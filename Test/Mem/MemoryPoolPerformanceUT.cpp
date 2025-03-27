@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <random>
@@ -16,6 +17,12 @@ protected:
     static constexpr uint32_t num_threads = 4;
     static constexpr uint32_t alloc_count = 100000;
 
+    static constexpr size_t lower = 64;                // 64B
+    static constexpr size_t upper = 512 * 1024 * 1024; // 512MB
+
+    inline static const double log_lower = std::log(static_cast<double>(lower));
+    inline static const double log_upper = std::log(static_cast<double>(upper));
+
     void SetUp() override {}
 
     void TearDown() override {}
@@ -31,13 +38,13 @@ TEST_F(MemoryPoolTest, BoostMemoryPoolPerformance)
     for (int i = 0; i < num_threads; ++i)
     {
         threads.emplace_back([]() {
-            std::random_device                    rd;
-            std::mt19937                          gen(rd());
-            std::uniform_int_distribution<size_t> dist(64, 512 * 1024 * 1024); // 64B to 512MB
+            std::random_device                     rd;
+            std::mt19937                           gen(rd());
+            std::uniform_real_distribution<double> dist(MemoryPoolTest::log_lower, MemoryPoolTest::log_upper); // 64B to 512MB
 
             for (int j = 0; j < MemoryPoolTest::alloc_count; ++j)
             {
-                size_t      size = dist(gen);
+                size_t      size = std::exp(dist(gen));
                 eBlockScale scale;
                 void*       ptr = MemoryPool::Malloc(size, scale);
                 if (ptr)
@@ -74,13 +81,13 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
     for (int i = 0; i < num_threads; ++i)
     {
         threads.emplace_back([]() {
-            std::random_device                    rd;
-            std::mt19937                          gen(rd());
-            std::uniform_int_distribution<size_t> dist(64, 512 * 1024 * 1024); // 64B to 512MB
+            std::random_device                     rd;
+            std::mt19937                           gen(rd());
+            std::uniform_real_distribution<double> dist(MemoryPoolTest::log_lower, MemoryPoolTest::log_upper); // 64B to 512MB
 
             for (int j = 0; j < MemoryPoolTest::alloc_count; ++j)
             {
-                size_t size = dist(gen);
+                size_t size = std::exp(dist(gen));
                 blk_t  blk  = multi_scale_singleton_pool<>::instance().allocate(size);
                 if (blk.ptr)
                 {
@@ -108,26 +115,25 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
 
 TEST_F(MemoryPoolTest, CustomMemoryPoolStats)
 {
-    auto pool = stats<multi_scale_singleton_pool<>>();
-    pool.init();
+    ENDA_INIT(stats<multi_scale_singleton_pool<>>::instance());
 
     std::vector<std::thread> threads;
     auto                     start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < num_threads; ++i)
     {
-        threads.emplace_back([&pool]() {
+        threads.emplace_back([]() {
             std::random_device                    rd;
             std::mt19937                          gen(rd());
-            std::uniform_int_distribution<size_t> dist(64, 512 * 1024 * 1024); // 64B to 512MB
+            std::uniform_real_distribution<double> dist(MemoryPoolTest::log_lower, MemoryPoolTest::log_upper); // 64B to 512MB
 
             for (int j = 0; j < MemoryPoolTest::alloc_count; ++j)
             {
-                size_t size = dist(gen);
-                blk_t  blk  = POOL_ALLOC_STATS(pool, size);
+                size_t size = std::exp(dist(gen));
+                blk_t  blk  = ENDA_MALLOC_STATS(stats<multi_scale_singleton_pool<>>::instance(), size);
                 if (blk.ptr)
                 {
-                    pool.deallocate(blk);
+                    ENDA_FREE(stats<multi_scale_singleton_pool<>>::instance(), blk);
                 }
                 else
                 {
@@ -146,5 +152,5 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolStats)
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "Custom memory_pool: " << duration.count() << " ms\n";
 
-    pool.release();
+    ENDA_RELEASE(stats<multi_scale_singleton_pool<>>::instance());
 }
