@@ -631,7 +631,7 @@ namespace enda::mem
             {
                 int                bin_index = 63 - i;
                 std::ostringstream rangeStream;
-                rangeStream << "[2^" << bin_index << ", 2^" << (bin_index + 1) << ")";
+                rangeStream << "[2^" << i << ", 2^" << (i + 1) << ")";
                 os << std::left << std::setw(rangeWidth) << rangeStream.str() << std::right << std::setw(countWidth) << m_requested_size_hist[bin_index]
                    << std::right << std::setw(countWidth) << m_allocated_size_hist[bin_index] << "\n";
             }
