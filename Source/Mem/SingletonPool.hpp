@@ -14,6 +14,22 @@
 
 namespace enda::mem
 {
+    constexpr uint64_t clock_tic() noexcept
+    {
+#if defined(__i386__) || defined(__x86_64)
+
+        // Return value of 64-bit hi-res clock register.
+
+        unsigned a = 0, d = 0;
+
+        __asm__ volatile("rdtscp" : "=a"(a), "=d"(d));
+
+        return ((uint64_t)a) | (((uint64_t)d) << 32);
+#else
+        return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+#endif
+    }
+
     template<typename Tag, std::size_t BlockSizeL2, std::size_t BlockCntL2, AddressSpace AdrSp = Host>
     class singleton_pool : public enda::singleton<singleton_pool<Tag, BlockSizeL2, BlockCntL2, AdrSp>>
     {
@@ -33,14 +49,18 @@ namespace enda::mem
 
             m_buffer.reset((char*)raw_buffer);
 
-            *status_buffer() = BlockCntL2 << concurrent_bitset::state_shift;
+            m_status_buffer  = reinterpret_cast<uint32_t*>(m_buffer.get());
+            *m_status_buffer = BlockCntL2 << concurrent_bitset::state_shift;
+            m_data_buffer    = m_buffer.get() + sizeof(uint32_t) * s_bitset_words;
 
             return true;
         }
 
         char* allocate()
         {
-            auto res = concurrent_bitset::acquire_bounded_lg2(status_buffer(), static_cast<uint32_t>(BlockCntL2));
+            uint32_t block_id_hint = static_cast<uint32_t>(clock_tic());
+
+            auto res = concurrent_bitset::acquire_bounded_lg2(status_buffer(), static_cast<uint32_t>(BlockCntL2), block_id_hint & s_hint_mask);
             int  bit = res.first;
 
             if (bit < 0)
@@ -90,20 +110,23 @@ namespace enda::mem
         }
 
     private:
-        inline uint32_t* status_buffer() noexcept { return reinterpret_cast<uint32_t*>(m_buffer.get()); }
+        inline uint32_t* status_buffer() noexcept { return m_status_buffer; }
 
-        inline char* data_buffer() noexcept { return m_buffer.get() + sizeof(uint32_t) * s_bitset_words; }
+        inline char* data_buffer() noexcept { return m_data_buffer; }
 
     private:
         static constexpr auto      s_address_space     = AdrSp;
         static constexpr size_type s_alignment         = k_cache_line;
         static constexpr size_type s_uint32_align_mask = s_alignment / sizeof(uint32_t) - 1;
         static constexpr size_type s_block_size        = 1ULL << BlockSizeL2;
+        static constexpr uint32_t  s_hint_mask         = (1 << BlockCntL2) - 1;
         static constexpr size_type s_bitset_words      = (concurrent_bitset::buffer_bound_lg2(BlockCntL2) + s_uint32_align_mask) & ~s_uint32_align_mask;
         static constexpr size_type s_data_size         = s_block_size << BlockCntL2;
         static constexpr size_type s_total_size        = sizeof(uint32_t) * s_bitset_words + s_data_size;
 
-        std::unique_ptr<char, ptr_deleter<s_address_space, s_alignment>> m_buffer = nullptr;
+        std::unique_ptr<char, ptr_deleter<s_address_space, s_alignment>> m_buffer        = nullptr;
+        uint32_t*                                                        m_status_buffer = nullptr;
+        char*                                                            m_data_buffer   = nullptr;
     };
 
 } // namespace enda::mem
