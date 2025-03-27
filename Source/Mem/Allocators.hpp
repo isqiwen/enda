@@ -42,7 +42,7 @@ namespace enda::mem
         e128M,
         e256M,
         e512M,
-        eInvalid
+        eDirect
     };
 
     using enum BlockScale;
@@ -54,10 +54,10 @@ namespace enda::mem
         char* ptr = nullptr;
 
         // Size of the memory block in bytes.
-        std::size_t s = 0;
+        std::size_t requested_size = 0;
 
-        // memory pool scale(optional)
-        BlockScale scale = eInvalid;
+        // memory pool scale
+        BlockScale scale = eDirect;
     };
 
     /**
@@ -76,7 +76,7 @@ namespace enda::mem
         static void release() noexcept { return; }
 
         // alloc_size: Size in bytes of the memory to allocate.
-        static blk_t allocate(std::size_t alloc_size) noexcept { return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size}; }
+        static blk_t allocate(std::size_t alloc_size) noexcept { return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size, eDirect}; }
 
         static blk_t allocate_zero(std::size_t alloc_size) noexcept
         {
@@ -111,6 +111,39 @@ namespace enda::mem
     constexpr std::size_t _128M = 1 << _128M_LG2;
     constexpr std::size_t _256M = 1 << _256M_LG2;
     constexpr std::size_t _512M = 1 << _512M_LG2;
+
+    constexpr std::size_t block_scale_size(BlockScale scale) noexcept
+    {
+        switch (scale)
+        {
+            case BlockScale::e64K:
+                return _64K;
+            case BlockScale::e1M:
+                return _1M;
+            case BlockScale::e2M:
+                return _2M;
+            case BlockScale::e4M:
+                return _4M;
+            case BlockScale::e8M:
+                return _8M;
+            case BlockScale::e16M:
+                return _16M;
+            case BlockScale::e32M:
+                return _32M;
+            case BlockScale::e64M:
+                return _64M;
+            case BlockScale::e128M:
+                return _128M;
+            case BlockScale::e256M:
+                return _256M;
+            case BlockScale::e512M:
+                return _512M;
+            case BlockScale::eDirect:
+                return 0;
+            default:
+                return 0;
+        }
+    }
 
     template<AddressSpace AdrSp = Host>
     class multi_scale_singleton_pool : public enda::singleton<multi_scale_singleton_pool<AdrSp>>
@@ -164,9 +197,9 @@ namespace enda::mem
         {
             BlockScale raw_scale = calculate_scale(alloc_size);
 
-            if (raw_scale == eInvalid)
+            if (raw_scale == eDirect)
             {
-                return blk_t {nullptr, 0, eInvalid};
+                return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size, eDirect};
             }
 
             char* p = nullptr;
@@ -175,7 +208,7 @@ namespace enda::mem
             {
                 BlockScale scale = raw_scale;
 
-                while (scale < eInvalid)
+                while (scale < eDirect)
                 {
                     switch (scale)
                     {
@@ -236,7 +269,7 @@ namespace enda::mem
                 }
             }
 
-            return blk_t {nullptr, 0, eInvalid};
+            return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size, eDirect};
         }
 
         static blk_t allocate_zero(std::size_t alloc_size) noexcept
@@ -293,6 +326,10 @@ namespace enda::mem
                 }
                 case BlockScale::e512M: {
                     ENDA_GET_POOL(e512M).deallocate(b.ptr);
+                    break;
+                }
+                case BlockScale::eDirect: {
+                    free<address_space>((void*)b.ptr);
                     break;
                 }
                 default:
@@ -358,7 +395,7 @@ namespace enda::mem
                 return e512M;
             }
 
-            return eInvalid;
+            return eDirect;
         }
 
     private:
@@ -367,10 +404,26 @@ namespace enda::mem
 
     struct AllocationRecord
     {
-        std::size_t size;
+        std::size_t requested_size;
+        std::size_t allocated_size;
         std::string file;
         int         line;
     };
+
+    std::string human_readable_size(std::size_t bytes)
+    {
+        const char* suffixes[]  = {"B", "K", "M", "G", "T", "P"};
+        int         suffixIndex = 0;
+        double      size        = static_cast<double>(bytes);
+        while (size >= 1024.0 && suffixIndex < 5)
+        {
+            size /= 1024.0;
+            ++suffixIndex;
+        }
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(1) << size << suffixes[suffixIndex];
+        return oss.str();
+    }
 
     /**
      * @brief Wrap an allocator to check for memory usage statistics.
@@ -395,16 +448,8 @@ namespace enda::mem
         ~stats()
         {
             std::scoped_lock lock(m_mutex);
-            if (!m_allocations.empty())
-            {
-                std::cerr << "Memory leak detected. Leaked allocations:\n";
-                for (const auto& [ptr, record] : m_allocations)
-                {
-                    std::cerr << "  Leaked pointer: " << ptr << ", size: " << record.size << ", allocated at: " << record.file << ":" << record.line << "\n";
-                }
-            }
 
-            print_histogram(std::cout);
+            print_detailed_stats(std::cout);
         }
 
         static void init() { s_allocator.init(); }
@@ -423,17 +468,34 @@ namespace enda::mem
 
             if (b.ptr)
             {
-                std::scoped_lock lock(m_mutex);
-                m_allocations.emplace(b.ptr, AllocationRecord {b.s, file, line});
+                AllocationRecord record;
 
-                if (alloc_size == 0)
+                std::scoped_lock lock(m_mutex);
+
+                if (b.scale == BlockScale::eDirect)
                 {
-                    m_hist.back() += 1;
+                    record = AllocationRecord {b.requested_size, b.requested_size, file, line};
                 }
                 else
                 {
-                    m_hist[std::countl_zero(alloc_size)] += 1;
+                    record = AllocationRecord {b.requested_size, block_scale_size(b.scale), file, line};
                 }
+
+                m_allocations.emplace(b.ptr, record);
+
+                if (alloc_size == 0)
+                {
+                    m_requested_size_hist.back() += 1;
+                    m_allocated_size_hist.back() += 1;
+                }
+                else
+                {
+                    m_requested_size_hist[std::countl_zero(record.requested_size)] += 1;
+                    m_allocated_size_hist[std::countl_zero(record.allocated_size)] += 1;
+                }
+
+                m_total_requested += record.requested_size;
+                m_total_allocated += record.allocated_size;
             }
 
             return b;
@@ -449,19 +511,36 @@ namespace enda::mem
         {
             blk_t b = s_allocator.allocate_zero(alloc_size);
 
-            if (nullptr != b.ptr)
+            if (b.ptr)
             {
-                std::scoped_lock lock(m_mutex);
-                m_allocations.emplace(b.ptr, AllocationRecord {b.s, file, line});
+                AllocationRecord record;
 
-                if (alloc_size == 0)
+                std::scoped_lock lock(m_mutex);
+
+                if (b.scale == BlockScale::eDirect)
                 {
-                    m_hist.back() += 1;
+                    record = AllocationRecord {b.requested_size, b.requested_size, file, line};
                 }
                 else
                 {
-                    m_hist[std::countl_zero(alloc_size)] += 1;
+                    record = AllocationRecord {b.requested_size, block_scale_size(b.scale), file, line};
                 }
+
+                m_allocations.emplace(b.ptr, record);
+
+                if (alloc_size == 0)
+                {
+                    m_requested_size_hist.back() += 1;
+                    m_allocated_size_hist.back() += 1;
+                }
+                else
+                {
+                    m_requested_size_hist[std::countl_zero(record.requested_size)] += 1;
+                    m_allocated_size_hist[std::countl_zero(record.allocated_size)] += 1;
+                }
+
+                m_total_requested += record.requested_size;
+                m_total_allocated += record.allocated_size;
             }
 
             return b;
@@ -523,19 +602,61 @@ namespace enda::mem
             return used;
         }
 
-        void print_histogram(std::ostream& os) const
+        template<typename CharT, typename Traits>
+        void print_detailed_stats(std::basic_ostream<CharT, Traits>& os) const
         {
-            os << "Allocation size histogram :\n";
-            os << "[0, 2^0): " << m_hist.back() << "\n";
+            os << "Detailed memory pool usage statistics:\n";
+            os << "Cumulative statistics:\n";
+            os << "  Total requested size: " << human_readable_size(m_total_requested) << "\n";
+            os << "  Total allocated size: " << human_readable_size(m_total_allocated) << "\n";
+            os << "  Wasted memory: " << human_readable_size(m_total_allocated - m_total_requested) << "\n";
+            os << "Allocation size histograms:\n";
+
+            const int rangeWidth = 25;
+            const int countWidth = 15;
+
+            os << std::left << std::setw(rangeWidth) << "Bin Range" << std::right << std::setw(countWidth) << "Requested" << std::right << std::setw(countWidth)
+               << "Allocated" << "\n";
+
+            os << std::string(rangeWidth + countWidth * 2, '-') << "\n";
+
+            {
+                std::ostringstream binRange;
+                binRange << "[0, 2^0)";
+                os << std::left << std::setw(rangeWidth) << binRange.str() << std::right << std::setw(countWidth) << m_requested_size_hist.back() << std::right
+                   << std::setw(countWidth) << m_allocated_size_hist.back() << "\n";
+            }
+
             for (int i = 0; i < 64; ++i)
             {
-                os << "[2^" << i << ", 2^" << (i + 1) << "): " << m_hist[63 - i] << "\n";
+                int                bin_index = 63 - i;
+                std::ostringstream rangeStream;
+                rangeStream << "[2^" << bin_index << ", 2^" << (bin_index + 1) << ")";
+                os << std::left << std::setw(rangeWidth) << rangeStream.str() << std::right << std::setw(countWidth) << m_requested_size_hist[bin_index]
+                   << std::right << std::setw(countWidth) << m_allocated_size_hist[bin_index] << "\n";
+            }
+
+            if (m_allocations.empty())
+            {
+                os << "No memory leak detected.\n";
+            }
+            else
+            {
+                os << "Memory leak detected. Leaked allocations:\n";
+                for (const auto& [ptr, record] : m_allocations)
+                {
+                    os << "  Leaked pointer: " << ptr << ", requested: " << human_readable_size(record.requested_size)
+                       << ", allocated: " << human_readable_size(record.allocated_size) << ", at: " << record.file << ":" << record.line << "\n";
+                }
             }
         }
 
     private:
         std::unordered_map<void*, AllocationRecord> m_allocations;
-        std::array<std::size_t, 65>                 m_hist = {0}; // Histogram of the allocation sizes.
+        std::size_t                                 m_total_requested     = 0;
+        std::size_t                                 m_total_allocated     = 0;
+        std::array<std::size_t, 65>                 m_requested_size_hist = {0}; // Histogram of the requested sizes.
+        std::array<std::size_t, 65>                 m_allocated_size_hist = {0}; // Histogram of the allocated sizes.
         std::mutex                                  m_mutex;
 
         inline static A& s_allocator = A::instance();
