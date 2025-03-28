@@ -1,57 +1,33 @@
-
-/** 
- *  itertools : Iterator building blocks for fast and memory efficient "iterator algebra".
- *
- *  Copyright (C) 2020 Hank Meng (ymenghank@gmail.com)
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 /**
- * @file islice.hpp
+ * @file Islice.hpp
  *
  * Return an iterator whose next() method returns selected values from an iterable.
- * 
+ *
  * If start is specified, will skip all preceding elements; otherwise, start defaults to zero.
- * 
+ *
  * step defaults to one. If specified as another value, step determines how many values are
  * skipped between successive calls.
  */
 
 #pragma once
 
-#include <itertools/range_view.hpp>
-
 #include <stdexcept>
 
-namespace itertools
+#include "Itertools/RangeView.hpp"
+
+namespace enda::itertools
 {
-    template <typename Iterator, typename Index, typename Step>
+    template<typename Iterator, typename Index, typename Step>
     class islice_iterator
     {
     public:
-        islice_iterator(Iterator first, Iterator last, Index idx, Index stop, Step step)
-            : _M_it(first), _M_it_last(last), _M_idx(idx), _M_idx_stop(stop), _M_idx_step(step)
-        {
-        }
+        islice_iterator(Iterator first, Iterator last, Index idx, Index stop, Step step) :
+            _M_it(first), _M_it_last(last), _M_idx(idx), _M_idx_stop(stop), _M_idx_step(step)
+        {}
 
-        decltype(auto) operator*() const
-        {
-            return *_M_it;
-        }
+        decltype(auto) operator*() const { return *_M_it; }
 
-        islice_iterator &operator++()
+        islice_iterator& operator++()
         {
             for (Step step = 0; step != _M_idx_step; ++step)
             {
@@ -69,25 +45,19 @@ namespace itertools
             return *this;
         }
 
-        bool operator==(const islice_iterator &other) const
-        {
-            return _M_it == other._M_it;
-        }
+        bool operator==(const islice_iterator& other) const { return _M_it == other._M_it; }
 
-        bool operator!=(const islice_iterator &other) const
-        {
-            return !(*this == other);
-        }
+        bool operator!=(const islice_iterator& other) const { return !(*this == other); }
 
     private:
         Iterator _M_it;
         Iterator _M_it_last;
-        Index _M_idx;
-        Index _M_idx_stop;
-        Step _M_idx_step;
+        Index    _M_idx;
+        Index    _M_idx_stop;
+        Step     _M_idx_step;
     };
 
-    template <typename Iterator, typename Index, typename Step>
+    template<typename Iterator, typename Index, typename Step>
     auto islice(Iterator first, Iterator last, Index start, Index stop, Step step)
     {
         using it_t = islice_iterator<Iterator, Index, Step>;
@@ -113,10 +83,10 @@ namespace itertools
         }
     }
 
-    template <typename Iterable, typename Index, typename Step>
-    auto islice(Iterable &&iterable, Index start, Index stop, Step step)
+    template<typename Iterable, typename Index, typename Step>
+    auto islice(Iterable&& iterable, Index start, Index stop, Step step)
     {
         return islice(iterable.begin(), iterable.end(), start, stop, step);
     }
 
-} // namespace itertools
+} // namespace enda::itertools

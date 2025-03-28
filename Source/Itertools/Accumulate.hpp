@@ -1,5 +1,5 @@
 /**
- * @file accumulate.hpp
+ * @file Accumulate.hpp
  *
  * Make an iterator that returns accumulated sums, or accumulated results of
  * other binary functions (specified via the optional func argument).
@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <itertools/range_view.hpp>
-
 #include <functional>
 #include <utility>
 
-namespace itertools
+#include "Itertools/RangeView.hpp"
+
+namespace enda::itertools
 {
     template<typename Iterator, typename S, typename Fn>
     class accumulate_iterator
@@ -73,4 +73,4 @@ namespace itertools
         return accumulate(iterable.begin(), iterable.end(), init, plus<S, decltype(*iterable.begin()), S>());
     }
 
-} // namespace itertools
+} // namespace enda::itertools
