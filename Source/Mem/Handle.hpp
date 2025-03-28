@@ -77,8 +77,14 @@ namespace enda::mem
         // Allocator to use.
 #ifndef ENDA_MEMORY_USAGE_STATS
         static inline A allocator; // NOLINT (allocator is not specific to a single instance)
+
+    #define HANDLE_HEAP_MALLOC(size) ENDA_MALLOC(allocator, size);
+    #define HANDLE_HEAP_MALLOC_ZERO(size) ENDA_MALLOC_ZERO(allocator, size);
 #else
         static inline stats<A> allocator; // NOLINT (allocator is not specific to a single instance)
+
+    #define HANDLE_HEAP_MALLOC(size) ENDA_MALLOC_STATS(allocator, size);
+    #define HANDLE_HEAP_MALLOC_ZERO(size) ENDA_MALLOC_ZERO_STATS(allocator, size);
 #endif
 
         // For shared ownership (points to a blk_T_t).
@@ -255,7 +261,7 @@ namespace enda::mem
         {
             if (size == 0)
                 return;
-            auto b = allocator.allocate(size * sizeof(T));
+            auto b = HANDLE_HEAP_MALLOC(size * sizeof(T));
             if (not b.ptr)
                 throw std::bad_alloc {};
             _data = (T*)b.ptr;
@@ -270,7 +276,7 @@ namespace enda::mem
         {
             if (size == 0)
                 return;
-            auto b = allocator.allocate_zero(size * sizeof(T));
+            auto b = HANDLE_HEAP_MALLOC_ZERO(size * sizeof(T));
             if (not b.ptr)
                 throw std::bad_alloc {};
             _data = (T*)b.ptr;
@@ -294,9 +300,13 @@ namespace enda::mem
                 return;
             blk_t b;
             if constexpr (is_complex_v<T> && init_dcmplx)
-                b = allocator.allocate_zero(size * sizeof(T));
+            {
+                b = HANDLE_HEAP_MALLOC_ZERO(size * sizeof(T));
+            }
             else
-                b = allocator.allocate(size * sizeof(T));
+            {
+                b = HANDLE_HEAP_MALLOC(size * sizeof(T));
+            }
             if (not b.ptr)
                 throw std::bad_alloc {};
             _data = (T*)b.ptr;
