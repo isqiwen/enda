@@ -57,7 +57,7 @@ namespace enda
         using handle = mem::handle_stack<T, Size>;
     };
 
-    /// Memory policy using an nda::mem::handle_shared.
+    // Memory policy using an nda::mem::handle_shared.
     struct shared
     {
         /**
