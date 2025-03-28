@@ -452,9 +452,9 @@ namespace enda::mem
             print_detailed_stats(std::cout);
         }
 
-        static void init() { s_allocator.init(); }
+        static void init() { A::init(); }
 
-        static void release() { s_allocator.release(); }
+        static void release() { A::release(); }
 
         /**
          * @brief Allocate memory and update the total memory used.
@@ -462,9 +462,9 @@ namespace enda::mem
          * @param alloc_size Size in bytes of the memory to allocate.
          * @return enda::mem::blk_t memory block.
          */
-        blk_t allocate(std::size_t alloc_size, const char* file, int line) noexcept
+        [[nodiscard]] blk_t allocate(std::size_t alloc_size, const char* file, int line) noexcept
         {
-            blk_t b = s_allocator.allocate(alloc_size);
+            blk_t b = A::allocate(alloc_size);
 
             if (b.ptr)
             {
@@ -507,9 +507,9 @@ namespace enda::mem
          * @param alloc_size Size in bytes of the memory to allocate.
          * @return enda::mem::blk_t memory block.
          */
-        blk_t allocate_zero(std::size_t alloc_size, const char* file, int line) noexcept
+        [[nodiscard]] blk_t allocate_zero(std::size_t alloc_size, const char* file, int line) noexcept
         {
-            blk_t b = s_allocator.allocate_zero(alloc_size);
+            blk_t b = A::allocate_zero(alloc_size);
 
             if (b.ptr)
             {
@@ -571,7 +571,7 @@ namespace enda::mem
                 }
             }
 
-            s_allocator.deallocate(b);
+            A::deallocate(b);
         }
 
         /**
@@ -588,7 +588,7 @@ namespace enda::mem
          * @brief Get the total memory used by the base allocator.
          * @return The size of the memory which has been allocated and not yet deallocated.
          */
-        [[nodiscard]] long get_memory_used() const noexcept
+        [[nodiscard]] std::size_t get_memory_used() const noexcept
         {
             std::scoped_lock lock(m_mutex);
 
@@ -596,7 +596,7 @@ namespace enda::mem
 
             for (auto& v : m_allocations)
             {
-                used += v.second.size;
+                used += v.second.allocated_size;
             }
 
             return used;
@@ -657,9 +657,7 @@ namespace enda::mem
         std::size_t                                 m_total_allocated     = 0;
         std::array<std::size_t, 65>                 m_requested_size_hist = {0}; // Histogram of the requested sizes.
         std::array<std::size_t, 65>                 m_allocated_size_hist = {0}; // Histogram of the allocated sizes.
-        std::mutex                                  m_mutex;
-
-        inline static A& s_allocator = A::instance();
+        mutable std::mutex                          m_mutex;
     };
 
 #define ENDA_MALLOC(allocator, size) (allocator).allocate(size);

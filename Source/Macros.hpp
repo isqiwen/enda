@@ -124,3 +124,7 @@
             std::terminate(); \
         }
 #endif
+
+// Use stats allocator
+
+#define ENDA_MEMORY_USAGE_STATS
