@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include "./range.hpp"
-
 #include <cstdint>
 #include <sstream>
 #include <stdexcept>
 
-namespace nda::detail
+#include "Layout/Range.hpp"
+
+namespace enda::detail
 {
 
     // Check the bounds when accessing single elements or slices of an array/view.
@@ -23,7 +23,7 @@ namespace nda::detail
         // Error code to store the positions of the arguments which are out of bounds.
         uint32_t error_code = 0;
 
-        // Number of dimensions that are covered by a given nda::ellipsis.
+        // Number of dimensions that are covered by a given enda::ellipsis.
         int ellipsis_loss = 0;
 
         // Current dimension to be checked.
@@ -39,7 +39,7 @@ namespace nda::detail
             ++N;
         }
 
-        // Check if the given nda::range is within the bounds of the array/view.
+        // Check if the given enda::range is within the bounds of the array/view.
         void check_current_dim(range const& r)
         {
             if (r.size() > 0)
@@ -52,10 +52,10 @@ namespace nda::detail
             ++N;
         }
 
-        // Check the bounds when an nda::range::all_t is encountered (no need to check anything).
+        // Check the bounds when an enda::range::all_t is encountered (no need to check anything).
         void check_current_dim(range::all_t) { ++N; }
 
-        // Check the bounds when an nda::ellipsis is encountered (no need to check anything).
+        // Check the bounds when an enda::ellipsis is encountered (no need to check anything).
         void check_current_dim(ellipsis) { N += ellipsis_loss + 1; }
 
         // Accumulate an error message for the current dimension and index.
@@ -66,7 +66,7 @@ namespace nda::detail
             N++;
         }
 
-        // Accumulate an error message for the current dimension and nda::range.
+        // Accumulate an error message for the current dimension and enda::range.
         void accumulate_error_msg(std::stringstream& fs, range const& r)
         {
             if (error_code & (1ull << N))
@@ -74,16 +74,16 @@ namespace nda::detail
             ++N;
         }
 
-        // Accumulate an error message for the current dimension and nda::range::all_t.
+        // Accumulate an error message for the current dimension and enda::range::all_t.
         void accumulate_error_msg(std::stringstream&, range::all_t) { ++N; }
 
-        // Accumulate an error message for the current dimension and nda::ellipsis.
+        // Accumulate an error message for the current dimension and enda::ellipsis.
         void accumulate_error_msg(std::stringstream&, ellipsis) { N += ellipsis_loss + 1; }
     };
 
-} // namespace nda::detail
+} // namespace enda::detail
 
-namespace nda
+namespace enda
 {
 
     /**
@@ -96,7 +96,7 @@ namespace nda
      * @tparam Args Types of the arguments to be checked.
      * @param rank Rank of the array/view.
      * @param lengths Shape of the array/view.
-     * @param args Arguments (`long` indices, `nda::range`, `nda::range::all_t` or nda::ellipsis) to be checked.
+     * @param args Arguments (`long` indices, `enda::range`, `enda::range::all_t` or enda::ellipsis) to be checked.
      */
     template<typename... Args>
     void assert_in_bounds(int rank, long const* lengths, Args const&... args)
@@ -104,7 +104,7 @@ namespace nda
         // initialize the bounds checker
         detail::bound_check_worker w {lengths};
 
-        // number of dimensions that are covered by an nda::ellipsis
+        // number of dimensions that are covered by an enda::ellipsis
         w.ellipsis_loss = rank - sizeof...(Args);
 
         // check the bounds on each argument/index
@@ -121,4 +121,4 @@ namespace nda
         throw std::runtime_error("Index/Range out of bounds:\n" + fs.str());
     }
 
-} // namespace nda
+} // namespace enda
