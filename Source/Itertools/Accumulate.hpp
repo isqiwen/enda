@@ -12,6 +12,8 @@
 
 #include <functional>
 #include <utility>
+#include <memory>
+#include <vector>
 
 #include "Itertools/RangeView.hpp"
 
@@ -21,24 +23,48 @@ namespace enda::itertools
     class accumulate_iterator
     {
     public:
-        accumulate_iterator(Iterator it, S init, Fn fn) : _M_it(it), _M_s(init), _M_fn(fn) {}
+        accumulate_iterator(Iterator first, Iterator last, S init, Fn fn) :
+            _M_it(first), _M_last(last), _M_s(init), _M_fn(fn), _M_first_yielded(false)
+        {}
 
         decltype(auto) operator*() const { return _M_s; }
 
         accumulate_iterator& operator++()
         {
-            _M_s = _M_fn(std::move(_M_s), *(++_M_it));
+            if (!_M_first_yielded)
+            {
+                _M_first_yielded = true;
+            }
+
+            if (_M_it != _M_last)
+            {
+                ++_M_it;
+                if (_M_it != _M_last)
+                {
+                    _M_s = _M_fn(std::move(_M_s), *_M_it);
+                }
+            }
             return *this;
         }
 
-        bool operator==(const accumulate_iterator& other) const { return _M_it == other._M_it; }
+        bool operator==(const accumulate_iterator& other) const { return _M_it == other._M_it && _M_first_yielded == other._M_first_yielded; }
 
         bool operator!=(const accumulate_iterator& other) const { return !(*this == other); }
 
+        static accumulate_iterator end_iterator(Iterator last, S init, Fn fn)
+        {
+            accumulate_iterator it(last, last, init, fn);
+            it._M_first_yielded = true;
+            return it;
+        }
+
     private:
         Iterator _M_it;
+        Iterator _M_last;
         S        _M_s;
         Fn       _M_fn;
+        bool     _M_first_yielded;
+        bool     _M_first_element = false;
     };
 
     template<class TL, class TR, class TResult>
@@ -50,8 +76,8 @@ namespace enda::itertools
     template<typename Iterator, typename S, typename Fn>
     auto accumulate(Iterator first, Iterator last, S init, Fn fn)
     {
-        accumulate_iterator<Iterator, S, Fn> a_it_first(first, (first == last) ? init : fn(init, *first), fn);
-        accumulate_iterator<Iterator, S, Fn> a_it_last(last, init, fn);
+        accumulate_iterator<Iterator, S, Fn> a_it_first(first, last, (first == last) ? init : fn(init, *first), fn);
+        accumulate_iterator<Iterator, S, Fn> a_it_last = accumulate_iterator<Iterator, S, Fn>::end_iterator(last, init, fn);
         return range_view(a_it_first, a_it_last);
     }
 

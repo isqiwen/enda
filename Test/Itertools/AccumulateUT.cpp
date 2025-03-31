@@ -1,23 +1,48 @@
-#include <iostream>
+#include <Itertools/Accumulate.hpp>
+#include <gtest/gtest.h>
 #include <vector>
 
-#include <Itertools/Accumulate.hpp>
-
-void test_accumulate(std::vector<int>&& nums)
+TEST(AccumulateTest, MultipleElements)
 {
-    std::cout << "[";
-    for (auto&& s : itertools::accumulate(nums.begin(), nums.end(), 0))
+    std::vector<int> v            = {1, 2, 3, 4, 5};
+    auto             result_range = enda::itertools::accumulate(v.begin(), v.end(), 0);
+
+    std::vector<int> result;
+    for (const auto& x : result_range)
     {
-        std::cout << s << " ";
+        result.push_back(x);
     }
-    std::cout << "]" << std::endl;
+
+    std::vector<int> expected = {1, 3, 6, 10, 15};
+    EXPECT_EQ(result, expected);
 }
 
-int main()
+TEST(AccumulateTest, EmptyVector)
 {
-    test_accumulate({1, 2, 3, 4, 5});
-    test_accumulate({});
-    test_accumulate({1});
+    std::vector<int> v;
+    auto             result_range = enda::itertools::accumulate(v.begin(), v.end(), 0);
 
-    return 0;
+    std::vector<int> result;
+    for (auto&& x : result_range)
+    {
+        result.push_back(x);
+    }
+
+    std::vector<int> expected = {0};
+    EXPECT_EQ(result, expected);
+}
+
+TEST(AccumulateTest, SingleElement)
+{
+    std::vector<int> v            = {1};
+    auto             result_range = enda::itertools::accumulate(v.begin(), v.end(), 0);
+
+    std::vector<int> result;
+    for (auto&& x : result_range)
+    {
+        result.push_back(x);
+    }
+
+    std::vector<int> expected = {1};
+    EXPECT_EQ(result, expected);
 }

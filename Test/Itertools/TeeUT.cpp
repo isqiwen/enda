@@ -1,23 +1,18 @@
-
 #include <Itertools/Tee.hpp>
-
 #include <algorithm>
-#include <stdexcept>
+#include <gtest/gtest.h>
 #include <vector>
 
-void test_tee()
+//------------------------------------------------------------------------------
+// Test case for tee: verifies that tee produces two iterators with identical output.
+//------------------------------------------------------------------------------
+TEST(TeeTest, ProducesEqualSequences)
 {
     std::vector<int> nums {1, 2, 3, 4, 5};
-    auto [X, Y] = itertools::tee<2>(nums);
-    if (!std::equal(X.begin(), X.end(), Y.begin(), Y.end()))
-    {
-        throw std::runtime_error("not equal");
-    }
-}
 
-int main()
-{
-    test_tee();
+    // Create two independent iterators using tee.
+    auto [X, Y] = enda::itertools::tee<2>(nums);
 
-    return 0;
+    // Verify that both iterators yield the same sequence.
+    EXPECT_TRUE(std::equal(X.begin(), X.end(), Y.begin(), Y.end()));
 }

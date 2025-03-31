@@ -71,6 +71,7 @@ namespace enda::itertools
                 {
                     if (++_M_it == _M_it_last)
                     {
+                        _M_its = _M_its_last; 
                         break;
                     }
                     _M_its = _M_its_first;
@@ -81,6 +82,8 @@ namespace enda::itertools
         }
 
         bool repeated(const Iterator& it) const { return _M_it == it || _M_its.repeated(it); }
+
+        bool valid() const { return !_M_its.repeated(_M_it); }
 
         bool operator==(const permutations_iterator& other) const { return _M_it == other._M_it && _M_its == other._M_its; }
 
@@ -122,7 +125,13 @@ namespace enda::itertools
 
         auto begin() const
         {
-            return permutations_iterator<Iterator, Iterators...>(_M_it_first, _M_it_last, _M_sub_product.begin(), _M_sub_product.begin(), _M_sub_product.end());
+            auto it = permutations_iterator<Iterator, Iterators...>(_M_it_first, _M_it_last, _M_sub_product.begin(), _M_sub_product.begin(), _M_sub_product.end());
+            auto end_it = end();
+            while (it != end_it && !it.valid())
+            {
+                ++it;
+            }
+            return it;
         }
 
         auto end() const

@@ -1,17 +1,23 @@
 #include <Itertools/Cycle.hpp>
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <vector>
 
-void test_cycle()
+//------------------------------------------------------------------------------
+// Test case for cycle_iterator: verifies that cycling over the sequence {1, 2, 3}
+// produces the expected output when iterated 7 times.
+//------------------------------------------------------------------------------
+TEST(CycleIteratorTest, CycleSevenElements)
 {
     std::vector<int> nums {1, 2, 3};
-    auto             cycler = itertools::cycle_iterator(nums.begin(), nums.end());
+    auto             cycler = enda::itertools::cycle_iterator(nums.begin(), nums.end());
+
+    std::vector<int> result;
     for (int i = 0; i < 7; ++i, ++cycler)
     {
-        std::cout << *cycler << " ";
+        result.push_back(*cycler);
     }
-    std::cout << std::endl;
-}
 
-int main() { return 0; }
+    // Expected sequence: 1, 2, 3, 1, 2, 3, 1
+    std::vector<int> expected {1, 2, 3, 1, 2, 3, 1};
+    EXPECT_EQ(result, expected);
+}

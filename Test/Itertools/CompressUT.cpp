@@ -1,32 +1,64 @@
 #include <Itertools/Compress.hpp>
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <vector>
 
-void test_compress(std::vector<int>&& ints, std::vector<bool>&& selectors)
+// Helper function to convert an iterable range to a vector.
+template<typename Range>
+auto to_vector(Range&& range)
 {
-    std::cout << "[";
-    for (auto& e : itertools::compress(ints.begin(), ints.end(), selectors.begin(), selectors.end()))
+    using ValueType = std::decay_t<decltype(*std::begin(range))>;
+    std::vector<ValueType> result;
+    for (auto&& element : range)
     {
-        std::cout << e << " ";
+        result.push_back(element);
     }
-    std::cout << "]" << std::endl;
+    return result;
 }
 
-int main()
+//------------------------------------------------------------------------------
+// Test when both the input vector and selectors are empty.
+//------------------------------------------------------------------------------
+TEST(CompressTest, BothEmpty)
 {
-    test_compress({}, {});
-    test_compress({1, 2}, {});
-    test_compress({}, {true, true});
-    test_compress({1, 2, 3, 4}, {false, true, false, true});
-    test_compress({1, 2, 3, 4}, {false, true, false});
-    test_compress(
-        {
-            1,
-            2,
-            3,
-        },
-        {false, true, false, true});
+    std::vector<int>  ints {};
+    std::vector<bool> selectors {};
+    auto              result = to_vector(enda::itertools::compress(ints.begin(), ints.end(), selectors.begin(), selectors.end()));
+    std::vector<int>  expected {};
+    EXPECT_EQ(result, expected);
+}
 
-    return 0;
+//------------------------------------------------------------------------------
+// Test when the input vector is non-empty but selectors are empty.
+//------------------------------------------------------------------------------
+TEST(CompressTest, NonEmptyIntsEmptySelectors)
+{
+    std::vector<int>  ints {1, 2};
+    std::vector<bool> selectors {};
+    auto              result = to_vector(enda::itertools::compress(ints.begin(), ints.end(), selectors.begin(), selectors.end()));
+    std::vector<int>  expected {}; // No selectors means no elements are selected.
+    EXPECT_EQ(result, expected);
+}
+
+//------------------------------------------------------------------------------
+// Test when the input vector is empty but selectors are non-empty.
+//------------------------------------------------------------------------------
+TEST(CompressTest, EmptyIntsNonEmptySelectors)
+{
+    std::vector<int>  ints {};
+    std::vector<bool> selectors {true, true};
+    auto              result = to_vector(enda::itertools::compress(ints.begin(), ints.end(), selectors.begin(), selectors.end()));
+    std::vector<int>  expected {}; // No input elements, so the result is empty.
+    EXPECT_EQ(result, expected);
+}
+
+//------------------------------------------------------------------------------
+// Test the normal case when both containers have equal lengths.
+//------------------------------------------------------------------------------
+TEST(CompressTest, NormalCaseExactLength)
+{
+    std::vector<int>  ints {1, 2, 3, 4};
+    std::vector<bool> selectors {false, true, false, true};
+    auto              result = to_vector(enda::itertools::compress(ints.begin(), ints.end(), selectors.begin(), selectors.end()));
+    std::vector<int>  expected {2, 4};
+    EXPECT_EQ(result, expected);
 }

@@ -1,30 +1,43 @@
 #include <Itertools/Permutations.hpp>
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <vector>
 
-void test_permutations()
+//------------------------------------------------------------------------------
+// Test permutations of length 1.
+//------------------------------------------------------------------------------
+TEST(PermutationsTest, PermutationsOfLength1)
 {
-    std::cout << __FUNCTION__ << std::endl;
+    std::vector<int> nums {1, 2, 3, 4, 5};
+    std::vector<int> result;
 
-    std::vector nums {1, 2, 3, 4, 5};
-
-    std::cout << "5 arrange 1: " << std::endl;
-    for (auto&& [a] : itertools::permutations<1>(nums))
+    // Each tuple has one element.
+    for (auto&& tup : enda::itertools::permutations<1>(nums))
     {
-        std::cout << a << std::endl;
+        auto [a] = tup;
+        result.push_back(a);
     }
 
-    std::cout << "5 arrange 3: " << std::endl;
-    for (auto&& [a, b, c] : itertools::permutations<3>(nums))
-    {
-        std::cout << a << " " << b << " " << c << std::endl;
-    }
+    // Expected output: {1, 2, 3, 4, 5}
+    std::vector<int> expected {1, 2, 3, 4, 5};
+    EXPECT_EQ(result, expected);
 }
 
-int main()
+//------------------------------------------------------------------------------
+// Test permutations of length 3.
+//------------------------------------------------------------------------------
+TEST(PermutationsTest, PermutationsOfLength3)
 {
-    test_permutations();
+    std::vector<int> nums {1, 2, 3, 4, 5};
+    int              count = 0;
 
-    return 0;
+    // There should be 5P3 = 5*4*3 = 60 permutations.
+    for (auto&& [a, b, c] : enda::itertools::permutations<3>(nums))
+    {
+        // Verify that the permutation contains distinct elements.
+        EXPECT_NE(a, b);
+        EXPECT_NE(a, c);
+        EXPECT_NE(b, c);
+        ++count;
+    }
+    EXPECT_EQ(count, 60);
 }

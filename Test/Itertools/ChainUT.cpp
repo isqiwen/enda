@@ -1,45 +1,59 @@
-#include <Itertools/Chain.hpp>
-#include <Itertools/RangeView.hpp>
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <list>
 #include <vector>
 
+#include <Itertools/Chain.hpp>
+#include <Itertools/RangeView.hpp>
 
-using namespace std;
-
-void test_chain_iterator()
+//------------------------------------------------------------------------------
+// Test case for chain_iterator using range_view
+//------------------------------------------------------------------------------
+TEST(ChainIteratorTest, ConcatenatesTwoSequences)
 {
-    vector<int> ints_vec {1, 2, 3, 4};
-    list<int>   ints_list {5, 6, 7};
+    // Create a vector of integers
+    std::vector<int> ints_vec {1, 2, 3, 4};
+    // Create a list of integers
+    std::list<int> ints_list {5, 6, 7};
 
-    auto first = itertools::chain_iterator<int, decltype(ints_vec.begin()), decltype(ints_list.begin())>(
+    // Construct chain_iterator manually from vector and list iterators
+    auto first = enda::itertools::chain_iterator<int, decltype(ints_vec.begin()), decltype(ints_list.begin())>(
         ints_vec.begin(), ints_vec.end(), ints_list.begin(), ints_list.end());
-    auto last = itertools::chain_iterator<int, decltype(ints_vec.begin()), decltype(ints_list.begin())>(
+    auto last = enda::itertools::chain_iterator<int, decltype(ints_vec.begin()), decltype(ints_list.begin())>(
         ints_vec.end(), ints_vec.end(), ints_list.end(), ints_list.end());
 
-    for (auto i : itertools::range_view(first, last))
+    // Use range_view to iterate over the concatenated sequence
+    std::vector<int> result;
+    for (auto i : enda::itertools::range_view(first, last))
     {
-        std::cout << i << std::endl;
+        result.push_back(i);
     }
+
+    // Expected sequence: [1, 2, 3, 4, 5, 6, 7]
+    std::vector<int> expected {1, 2, 3, 4, 5, 6, 7};
+    EXPECT_EQ(result, expected);
 }
 
-void test_chain()
+//------------------------------------------------------------------------------
+// Test case for chain() function
+//------------------------------------------------------------------------------
+TEST(ChainTest, ConcatenatesTwoSequences)
 {
-    vector<int> ints_vec {1, 2, 3, 4};
-    list<int>   ints_list {5, 6, 7};
+    // Create a vector of integers
+    std::vector<int> ints_vec {1, 2, 3, 4};
+    // Create a list of integers
+    std::list<int> ints_list {5, 6, 7};
 
-    for (auto i : itertools::chain(ints_vec, ints_list))
+    // Use the chain function to concatenate the two containers
+    auto chain_range = enda::itertools::chain(ints_vec, ints_list);
+
+    // Collect the results into a vector
+    std::vector<int> result;
+    for (auto i : chain_range)
     {
-        std::cout << i << std::endl;
+        result.push_back(i);
     }
-}
 
-int main()
-{
-    test_chain_iterator();
-
-    test_chain();
-
-    return 0;
+    // Expected sequence: [1, 2, 3, 4, 5, 6, 7]
+    std::vector<int> expected {1, 2, 3, 4, 5, 6, 7};
+    EXPECT_EQ(result, expected);
 }

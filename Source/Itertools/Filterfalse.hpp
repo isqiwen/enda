@@ -1,5 +1,5 @@
 /**
- * @file filterfalse.hpp
+ * @file Filterfalse.hpp
  *
  * Return those items of sequence for which function(item) is false.
  * If function is None, return the items that are false.
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "Itertools/RangeView.hpp"
+#include "Itertools/Filter.hpp"
 
 namespace enda::itertools
 {

@@ -1,22 +1,23 @@
-
 #include <Itertools/Takewhile.hpp>
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <vector>
 
-void test_takewhile()
+//------------------------------------------------------------------------------
+// Test case for takewhile: verifies that only elements satisfying the predicate
+// (n < 3) are taken from the beginning of the vector.
+//------------------------------------------------------------------------------
+TEST(TakewhileTest, BasicTakewhile)
 {
     std::vector<int> nums {1, 2, 3, 4, 5};
-    for (auto n : itertools::takewhile([](int n) { return n < 3; }, nums))
+    std::vector<int> result;
+
+    // Use takewhile with a predicate that takes elements while n < 3.
+    for (auto n : enda::itertools::takewhile([](int n) { return n < 3; }, nums))
     {
-        std::cout << n << " ";
+        result.push_back(n);
     }
-    std::cout << std::endl;
-}
 
-int main()
-{
-    test_takewhile();
-
-    return 0;
+    // Expected result: only 1 and 2 are taken.
+    std::vector<int> expected {1, 2};
+    EXPECT_EQ(result, expected);
 }

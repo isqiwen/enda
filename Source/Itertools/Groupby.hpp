@@ -56,6 +56,11 @@ namespace enda::itertools
 
         groupby_iterator& operator++()
         {
+            if (_M_it == _M_it_last)
+            {
+                _M_group_it_first = _M_it;
+                return *this;
+            }
             _M_group_it_first = _M_it;
             _M_key            = _M_next_key;
             ++_M_it; // so don't repeat computing key on the same element

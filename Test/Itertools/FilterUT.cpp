@@ -1,22 +1,23 @@
-
 #include <Itertools/Filter.hpp>
-
-#include <iostream>
+#include <gtest/gtest.h>
 #include <vector>
 
-void test_filter()
+//------------------------------------------------------------------------------
+// Test case for filter: verifies that filter returns only truthy values from the input.
+// In this example, non-zero integers are considered true, so the expected result is {1, -1, 1}.
+//------------------------------------------------------------------------------
+TEST(FilterTest, BasicFilter)
 {
     std::vector<int> nums {1, 0, -1, 0, 1};
-    for (auto n : itertools::filter(nums))
+
+    // Collect the results of applying filter to nums.
+    std::vector<int> result;
+    for (auto n : enda::itertools::filter(nums))
     {
-        std::cout << n << " ";
+        result.push_back(n);
     }
-    std::cout << std::endl;
-}
 
-int main()
-{
-    test_filter();
-
-    return 0;
+    // Expected output: {1, -1, 1}
+    std::vector<int> expected {1, -1, 1};
+    EXPECT_EQ(result, expected);
 }
