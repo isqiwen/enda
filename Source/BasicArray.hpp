@@ -6,6 +6,16 @@
 
 #pragma once
 
+#include <algorithm>
+#include <array>
+#include <complex>
+#include <concepts>
+#include <initializer_list>
+#include <random>
+#include <ranges>
+#include <type_traits>
+#include <utility>
+
 #include "Accessors.hpp"
 #include "BasicArrayView.hpp"
 #include "BasicFunctions.hpp"
@@ -17,57 +27,47 @@
 #include "Layout/Range.hpp"
 #include "LayoutTransforms.hpp"
 #include "Macros.hpp"
-#include "Mem/Address_space.hpp"
+#include "Mem/AddressSpace.hpp"
 #include "Mem/Memcpy.hpp"
 #include "Mem/Policies.hpp"
 #include "StdUtil/Array.hpp"
 #include "Traits.hpp"
-
-#include <algorithm>
-#include <array>
-#include <complex>
-#include <concepts>
-#include <initializer_list>
-#include <random>
-#include <ranges>
-#include <type_traits>
-#include <utility>
 
 #ifdef ENDA_ENFORCE_BOUNDCHECK
     #include <exception>
     #include <iostream>
 #endif // ENDA_ENFORCE_BOUNDCHECK
 
-namespace nda
+namespace enda
 {
 
     /**
      * @ingroup arrays_views
      * @brief A generic multi-dimensional array.
      *
-     * @details Together with nda::basic_array_view, this class forms the backbone of the **nda** library. It is templated
+     * @details Together with enda::basic_array_view, this class forms the backbone of the **enda** library. It is templated
      * with the following parameters:
      *
      * - `ValueType`: This is the type of the elements stored in the array. Most of the time, this will be a scalar type
      * like an int, double or std::complex<double>, but it can also be a more complex type like a custom class or a
-     * another nda::basic_array.
+     * another enda::basic_array.
      * - `Rank`: Integer specifying the number of dimensions of the array. This is a compile-time constant.
      * - `LayoutPolicy`: The layout policy specifies how the array views the memory it uses and how it accesses its
      * elements. It provides a mapping from multi-dimensional to linear indices and vice versa (see @ref layout_pols).
      * - `Algebra`: The algebra specifies how an array behaves when it is used in an expression. Possible values are 'A'
-     * (array), 'M' (matrix) and 'V' (vector) (see nda::get_algebra).
+     * (array), 'M' (matrix) and 'V' (vector) (see enda::get_algebra).
      * - `ContainerPolicy`: The container policy specifies how and where the data is stored. It is responsible for
      * allocating/deallocating the memory (see @ref mem_handles).
      *
-     * In contrast to views (see nda::basic_array_view), regular arrays own the memory they use for data storage.
+     * In contrast to views (see enda::basic_array_view), regular arrays own the memory they use for data storage.
      *
      * @code{.cpp}
      * // create a regular 3x2 array of ones
-     * auto arr = nda::ones<int>(3, 2);
+     * auto arr = enda::ones<int>(3, 2);
      * std::cout << arr << std::endl;
      *
      * // assign the value 42 to the first row
-     * arr(0, nda::ellipsis{}) = 42;
+     * arr(0, enda::ellipsis{}) = 42;
      * std::cout << arr << std::endl;
      * @endcode
      *
@@ -85,7 +85,7 @@ namespace nda
      * @endcode
      *
      * Arrays and views share a lot of the same operations and functionalities. To turn a view into a regular array, use
-     * nda::make_regular.
+     * enda::make_regular.
      *
      * @tparam ValueType Type stored in the array.
      * @tparam Rank Number of dimensions of the array.
@@ -97,10 +97,10 @@ namespace nda
     class basic_array
     {
         // Compile-time checks.
-        static_assert(!std::is_const_v<ValueType>, "Error in nda::basic_array: ValueType cannot be const");
-        static_assert((Algebra != 'N'), "Internal error in nda::basic_array: Algebra 'N' not supported");
-        static_assert((Algebra != 'M') or (Rank == 2), "Internal error in nda::basic_array: Algebra 'M' requires a rank 2 array");
-        static_assert((Algebra != 'V') or (Rank == 1), "Internal error in nda::basic_array: Algebra 'V' requires a rank 1 array");
+        static_assert(!std::is_const_v<ValueType>, "Error in enda::basic_array: ValueType cannot be const");
+        static_assert((Algebra != 'N'), "Internal error in enda::basic_array: Algebra 'N' not supported");
+        static_assert((Algebra != 'M') or (Rank == 2), "Internal error in enda::basic_array: Algebra 'M' requires a rank 2 array");
+        static_assert((Algebra != 'V') or (Rank == 1), "Internal error in enda::basic_array: Algebra 'V' requires a rank 1 array");
 
     public:
         /// Type of the values in the array (can not be const).
@@ -109,7 +109,7 @@ namespace nda
         /// Type of the memory layout policy (see @ref layout_pols).
         using layout_policy_t = LayoutPolicy;
 
-        /// Type of the memory layout (an nda::idx_map).
+        /// Type of the memory layout (an enda::idx_map).
         using layout_t = typename LayoutPolicy::template mapping<Rank>;
 
         /// Type of the container policy (see @ref mem_pols).
@@ -125,7 +125,7 @@ namespace nda
         static constexpr int rank = Rank;
 
         // Compile-time check.
-        static_assert(has_contiguous(layout_t::layout_prop), "Error in nda::basic_array: Memory layout has to be contiguous");
+        static_assert(has_contiguous(layout_t::layout_prop), "Error in enda::basic_array: Memory layout has to be contiguous");
 
     private:
         // Type of the array itself.
@@ -143,7 +143,7 @@ namespace nda
         // Constexpr variable that is true if the array is a view (never for basic_array).
         static constexpr bool is_view = false;
 
-        // Memory layout of the array, i.e. the nda::idx_map.
+        // Memory layout of the array, i.e. the enda::idx_map.
         layout_t lay;
 
         // Memory handle of the array.
@@ -157,20 +157,20 @@ namespace nda
     public:
         /**
          * @brief Convert the current array to a view with an 'A' (array) algebra.
-         * @return An nda::basic_array_view of the current array.
+         * @return An enda::basic_array_view of the current array.
          */
         auto as_array_view() { return basic_array_view<ValueType, Rank, LayoutPolicy, 'A', AccessorPolicy, OwningPolicy> {*this}; };
 
         /**
          * @brief Convert the current array to a view with an 'A' (array) algebra.
-         * @return An nda::basic_array_view of the current array with const value type.
+         * @return An enda::basic_array_view of the current array with const value type.
          */
         auto as_array_view() const { return basic_array_view<const ValueType, Rank, LayoutPolicy, 'A', AccessorPolicy, OwningPolicy> {*this}; };
 
-        /// @deprecated Create the transpose of a 2-dimensional array. Use nda::transpose instead.
+        /// @deprecated Create the transpose of a 2-dimensional array. Use enda::transpose instead.
         [[deprecated]] auto transpose() requires(Rank == 2) { return permuted_indices_view<encode(std::array<int, 2> {1, 0})>(*this); }
 
-        /// @deprecated Create the transpose of a 2-dimensional array. Use nda::transpose instead.
+        /// @deprecated Create the transpose of a 2-dimensional array. Use enda::transpose instead.
         [[deprecated]] auto transpose() const requires(Rank == 2) { return permuted_indices_view<encode(std::array<int, 2> {1, 0})>(*this); }
 
         /// Default constructor constructs an empty array with a default constructed memory handle and layout.
@@ -259,15 +259,15 @@ namespace nda
         explicit basic_array(layout_t const& layout, storage_t&& storage) noexcept : lay {layout}, sto {std::move(storage)} {}
 
         /**
-         * @brief Construct an array from an nda::ArrayOfRank object with the same rank by copying each element.
+         * @brief Construct an array from an enda::ArrayOfRank object with the same rank by copying each element.
          *
-         * @tparam A nda::ArrayOfRank type.
-         * @param a nda::ArrayOfRank object.
+         * @tparam A enda::ArrayOfRank type.
+         * @param a enda::ArrayOfRank object.
          */
         template<ArrayOfRank<Rank> A>
         requires(HasValueTypeConstructibleFrom<A, value_type>) basic_array(A const& a) : lay(a.shape()), sto {lay.size(), mem::do_not_initialize}
         {
-            static_assert(std::is_constructible_v<value_type, get_value_t<A>>, "Error in nda::basic_array: Incompatible value types in constructor");
+            static_assert(std::is_constructible_v<value_type, get_value_t<A>>, "Error in enda::basic_array: Incompatible value types in constructor");
             if constexpr (std::is_trivial_v<ValueType> or is_complex_v<ValueType>)
             {
                 // trivial and complex value types can use the optimized assign_from_ndarray
@@ -276,18 +276,18 @@ namespace nda
             else
             {
                 // general value types may not be default constructible -> use placement new
-                nda::for_each(lay.lengths(), [&](auto const&... is) { new (sto.data() + lay(is...)) ValueType {a(is...)}; });
+                enda::for_each(lay.lengths(), [&](auto const&... is) { new (sto.data() + lay(is...)) ValueType {a(is...)}; });
             }
         }
 
         /**
-         * @brief Construct an array from an nda::ArrayInitializer object.
+         * @brief Construct an array from an enda::ArrayInitializer object.
          *
-         * @details An nda::ArrayInitializer is typically returned by delayed operations (see e.g. nda::mpi_gather).
+         * @details An enda::ArrayInitializer is typically returned by delayed operations (see e.g. enda::mpi_gather).
          * The constructor can then be used to create the resulting array.
          *
-         * @tparam Initializer nda::ArrayInitializer type.
-         * @param initializer nda::ArrayInitializer object.
+         * @tparam Initializer enda::ArrayInitializer type.
+         * @param initializer enda::ArrayInitializer object.
          */
         template<ArrayInitializer<basic_array> Initializer> // can not be explicit
         basic_array(Initializer const& initializer) : basic_array {initializer.shape()}
@@ -304,7 +304,7 @@ namespace nda
         static auto shape_from_init_list(std::initializer_list<L> const& l) noexcept
         {
             const auto [min, max] = std::minmax_element(std::begin(l), std::end(l), [](auto&& x, auto&& y) { return x.size() < y.size(); });
-            EXPECTS_WITH_MESSAGE(min->size() == max->size(), "Error in nda::basic_array: Arrays can only be initialized with rectangular initializer lists");
+            EXPECTS_WITH_MESSAGE(min->size() == max->size(), "Error in enda::basic_array: Arrays can only be initialized with rectangular initializer lists");
             return stdutil::front_append(shape_from_init_list(*max), long(l.size()));
         }
 
@@ -369,7 +369,7 @@ namespace nda
         /**
          * @brief Construct a 2-dimensional array from another 2-dimensional array with a different algebra.
          *
-         * @details The given array is moved into the constructed array. Note that for nda::stack_array or other array
+         * @details The given array is moved into the constructed array. Note that for enda::stack_array or other array
          * types, this might still involve a copy of the data.
          *
          * @tparam A2 Algebra of the given array.
@@ -414,7 +414,7 @@ namespace nda
          * @return One-initialized array.
          */
         template<std::integral Int = long>
-        static basic_array ones(std::array<Int, Rank> const& shape) requires(nda::is_scalar_v<ValueType>)
+        static basic_array ones(std::array<Int, Rank> const& shape) requires(enda::is_scalar_v<ValueType>)
         {
             auto res = basic_array {stdutil::make_std_array<long>(shape)};
             res()    = ValueType {1};
@@ -445,13 +445,13 @@ namespace nda
          * @return Random-initialized array.
          */
         template<std::integral Int = long>
-        static basic_array rand(std::array<Int, Rank> const& shape) requires(std::is_floating_point_v<ValueType> or nda::is_complex_v<ValueType>)
+        static basic_array rand(std::array<Int, Rank> const& shape) requires(std::is_floating_point_v<ValueType> or enda::is_complex_v<ValueType>)
         {
             using namespace std::complex_literals;
             auto static gen  = std::mt19937(std::random_device {}());
             auto static dist = std::uniform_real_distribution<>(0.0, 1.0);
             auto res         = basic_array {shape};
-            if constexpr (nda::is_complex_v<ValueType>)
+            if constexpr (enda::is_complex_v<ValueType>)
                 for (auto& x : res)
                     x = dist(gen) + 1i * dist(gen);
             else
@@ -500,12 +500,12 @@ namespace nda
         }
 
         /**
-         * @brief Assignment operator makes a deep copy of an nda::ArrayOfRank object.
+         * @brief Assignment operator makes a deep copy of an enda::ArrayOfRank object.
          *
          * @details The array is first resized to the shape of the right hand side and the elements are copied. This might
          * invalidate all references/views to the existing storage.
          *
-         * @tparam RHS nda::ArrayOfRank type.
+         * @tparam RHS enda::ArrayOfRank type.
          * @param rhs Right hand side of the assignment operation.
          */
         template<ArrayOfRank<Rank> RHS>
@@ -534,12 +534,12 @@ namespace nda
         }
 
         /**
-         * @brief Assignment operator uses an nda::ArrayInitializer to assign to the array.
+         * @brief Assignment operator uses an enda::ArrayInitializer to assign to the array.
          *
          * @details The array is resized to the shape of the initializer. This might invalidate all references/views to the
          * existing storage.
          *
-         * @tparam Initializer nda::ArrayInitializer type.
+         * @tparam Initializer enda::ArrayInitializer type.
          * @param initializer Initializer object.
          */
         template<ArrayInitializer<basic_array> Initializer>
@@ -563,8 +563,8 @@ namespace nda
         template<std::integral... Ints>
         void resize(Ints const&... is)
         {
-            static_assert(std::is_copy_constructible_v<ValueType>, "Error in nda::basic_array: Resizing requires the value_type to be copy constructible");
-            static_assert(sizeof...(is) == Rank, "Error in nda::basic_array: Resizing requires exactly Rank arguments");
+            static_assert(std::is_copy_constructible_v<ValueType>, "Error in enda::basic_array: Resizing requires the value_type to be copy constructible");
+            static_assert(sizeof...(is) == Rank, "Error in enda::basic_array: Resizing requires exactly Rank arguments");
             resize(std::array<long, Rank> {long(is)...});
         }
 
@@ -585,7 +585,7 @@ namespace nda
         }
 
 // include common functionality of arrays and views
-#include "./_impl_basic_array_view_common.hpp"
+#include "ImplBasicArrayViewCommon.hpp"
     };
 
     // Class template argument deduction guides.
@@ -599,4 +599,4 @@ namespace nda
     template<Array A>
     basic_array(A&& a) -> basic_array<get_value_t<A>, get_rank<A>, C_layout, get_algebra<A>, heap<>>;
 
-} // namespace nda
+} // namespace enda

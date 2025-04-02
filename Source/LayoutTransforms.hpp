@@ -281,4 +281,4 @@ namespace enda
 
     /** @} */
 
-} // namespace nda
+} // namespace enda

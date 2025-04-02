@@ -10,7 +10,7 @@
 #include "Mem/ConcurrentBitset.hpp"
 #include "Mem/Malloc.hpp"
 #include "Mem/Memset.hpp"
-#include "Singleton.h"
+#include "Singleton.hpp"
 
 namespace enda::mem
 {

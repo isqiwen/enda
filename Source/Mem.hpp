@@ -1,31 +1,19 @@
-// Copyright (c) 2021 Simons Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0.txt
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Authors: Nils Wentzell
-
 /**
- * @file
+ * @file Mem.hpp
+ *
  * @brief Includes all relevant headers for memory allocation and management.
  */
 
 #pragma once
 
-#include "./device.hpp"
-#include "./mem/address_space.hpp"
-#include "./mem/allocators.hpp"
-#include "./mem/handle.hpp"
-#include "./mem/malloc.hpp"
-#include "./mem/memcpy.hpp"
-#include "./mem/memset.hpp"
-#include "./mem/policies.hpp"
+#include "Device.hpp"
+#include "Mem/AddressSpace.hpp"
+#include "Mem/Allocators.hpp"
+#include "Mem/BoostMemoryPool.hpp"
+#include "Mem/ConcurrentBitset.hpp"
+#include "Mem/Handle.hpp"
+#include "Mem/Malloc.hpp"
+#include "Mem/Memcpy.hpp"
+#include "Mem/Memset.hpp"
+#include "Mem/Policies.hpp"
+#include "Mem/SingletonPool.hpp"

@@ -146,279 +146,279 @@ namespace enda
     }
 
     /**
-     * @brief Lazy, coefficient-wise abs function for nda::Array types.
+     * @brief Lazy, coefficient-wise abs function for enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto abs(A&& a)
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::abs;
             return abs(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise imag function for nda::Array types.
+     * @brief Lazy, coefficient-wise imag function for enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto imag(A&& a)
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::imag;
             return imag(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise floor function for nda::Array types.
+     * @brief Lazy, coefficient-wise floor function for enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto floor(A&& a)
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::floor;
             return floor(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise real function for nda::Array types.
+     * @brief Lazy, coefficient-wise real function for enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto real(A&& a)
     {
-        return nda::map([](auto const& x) { return real(x); })(std::forward<A>(a));
+        return enda::map([](auto const& x) { return real(x); })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise abs2 function for nda::Array types.
+     * @brief Lazy, coefficient-wise abs2 function for enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto abs2(A&& a)
     {
-        return nda::map([](auto const& x) { return abs2(x); })(std::forward<A>(a));
+        return enda::map([](auto const& x) { return abs2(x); })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise isnan function for nda::Array types.
+     * @brief Lazy, coefficient-wise isnan function for enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto isnan(A&& a)
     {
-        return nda::map([](auto const& x) { return isnan(x); })(std::forward<A>(a));
+        return enda::map([](auto const& x) { return isnan(x); })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise exp function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise exp function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto exp(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::exp;
             return exp(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise cos function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise cos function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto cos(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::cos;
             return cos(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise sin function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise sin function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto sin(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::sin;
             return sin(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise tan function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise tan function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto tan(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::tan;
             return tan(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise cosh function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise cosh function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto cosh(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::cosh;
             return cosh(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise sinh function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise sinh function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto sinh(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::sinh;
             return sinh(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise tanh function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise tanh function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto tanh(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::tanh;
             return tanh(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise acos function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise acos function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto acos(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::acos;
             return acos(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise asin function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise asin function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto asin(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::asin;
             return asin(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise atan function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise atan function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto atan(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::atan;
             return atan(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise log function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise log function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto log(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::log;
             return log(x);
         })(std::forward<A>(a));
     }
 
     /**
-     * @brief Lazy, coefficient-wise sqrt function for non-matrix nda::Array types.
+     * @brief Lazy, coefficient-wise sqrt function for non-matrix enda::Array types.
      *
-     * @tparam A nda::Array type.
-     * @param a nda::Array object.
-     * @return A lazy nda::expr_call object.
+     * @tparam A enda::Array type.
+     * @param a enda::Array object.
+     * @return A lazy enda::expr_call object.
      */
     template<Array A>
     auto sqrt(A&& a) requires(get_algebra<A> != 'M')
     {
-        return nda::map([](auto const& x) {
+        return enda::map([](auto const& x) {
             using std::sqrt;
             return sqrt(x);
         })(std::forward<A>(a));

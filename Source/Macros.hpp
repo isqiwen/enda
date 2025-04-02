@@ -127,4 +127,4 @@
 
 // Use stats allocator
 
-#define ENDA_MEMORY_USAGE_STATS
+// #define ENDA_MEMORY_USAGE_STATS

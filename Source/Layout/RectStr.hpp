@@ -82,7 +82,7 @@ namespace enda
         static std::array<long, Rank> make_shape_from_string_indices(ind_t const& str_indices)
         {
             if (str_indices.size() != Rank)
-                NDA_RUNTIME_ERROR << "Error in rect_str::make_shape_from_string_indices: String indices do not have the correct rank";
+                ENDA_RUNTIME_ERROR << "Error in rect_str::make_shape_from_string_indices: String indices do not have the correct rank";
             std::array<long, Rank> sha;
             for (int i = 0; i < Rank; ++i)
                 sha[i] = str_indices[i].size();
@@ -228,7 +228,7 @@ namespace enda
                 auto const& idx  = sind[pos];
                 auto        it   = std::find(idx.begin(), idx.end(), arg);
                 if (it == idx.end())
-                    NDA_RUNTIME_ERROR << "Error in enda::rect_str: Key " << arg << " at position " << pos << " does not match an index";
+                    ENDA_RUNTIME_ERROR << "Error in enda::rect_str: Key " << arg << " at position " << pos << " does not match an index";
                 return it - idx.begin();
             }
         }

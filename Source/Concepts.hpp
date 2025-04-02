@@ -166,6 +166,13 @@ namespace enda
 
     } // namespace mem
 
+    /** @} */
+
+    /**
+     * @addtogroup av_utils
+     * @{
+     */
+
     /**
      * @brief Check if a given type satisfies the array concept.
      *
@@ -275,5 +282,35 @@ namespace enda
      */
     template<typename V>
     concept MemoryVector = MemoryArrayOfRank<V, 1>;
+
+    /**
+     * @brief Check if a given type satisfies the array initializer concept for a given enda::MemoryArray type.
+     *
+     * @details They are mostly used in lazy mpi calls (see e.g. enda::mpi_reduce).
+     *
+     * @tparam A Type to check.
+     * @tparam B enda::MemoryArray type.
+     */
+    template<typename A, typename B>
+    concept ArrayInitializer = requires(A const& a)
+    {
+        {
+            a.shape()
+        } -> StdArrayOfLong;
+        typename std::remove_cvref_t<A>::value_type;
+        requires MemoryArray<B>&& requires(B & b) { a.invoke(b); }; // FIXME not perfect: it should accept any layout ??
+    };
+
+    // FIXME : We should not need this ... Only used once...
+    /**
+     * @brief Check if a given type is constructible from the value type of a given enda::Array type.
+     *
+     * @tparam A enda::Array type.
+     * @tparam U Type to check.
+     */
+    template<typename A, typename U>
+    concept HasValueTypeConstructibleFrom = Array<A> and (std::is_constructible_v<U, get_value_t<A>>);
+
+    /** @} */
 
 } // namespace enda
