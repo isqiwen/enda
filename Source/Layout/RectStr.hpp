@@ -1,17 +1,10 @@
 /**
- * @file
+ * @file RectStr.hpp
+ *
  * @brief Provides an extension to enda::idx_map to support string indices.
  */
 
 #pragma once
-
-#include "../basic_array.hpp"
-#include "../basic_functions.hpp"
-#include "../declarations.hpp"
-#include "../exceptions.hpp"
-#include "../traits.hpp"
-#include "./idx_map.hpp"
-#include "./policies.hpp"
 
 #include <array>
 #include <cstdint>
@@ -20,7 +13,15 @@
 #include <type_traits>
 #include <utility>
 
-namespace nda
+#include "BasicArray.hpp"
+#include "BasicFunctions.hpp"
+#include "Declarations.hpp"
+#include "Exceptions.hpp"
+#include "Layout/IdxMap.hpp"
+#include "Layout/Policies.hpp"
+#include "Traits.hpp"
+
+namespace enda
 {
 
     /**
@@ -489,4 +490,4 @@ namespace nda
 
     /** @} */
 
-} // namespace nda
+} // namespace enda

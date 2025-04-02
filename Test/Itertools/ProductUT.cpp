@@ -1,98 +1,119 @@
-#include <Itertools/Product.hpp>
-#include <Itertools/RangeView.hpp>
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <iterator>
+#include <array>
+#include <sstream>
+#include <string>
 #include <tuple>
 #include <vector>
 
-//------------------------------------------------------------------------------
-// Test the product_iterator construction manually.
-// This test constructs a three‑level product iterator over arrays X, Y, Z.
-// Expected output for X = {1,2,3}, Y = {'A','B'}, Z = {0.5, 0.6} is:
-//   (1, 'A', 0.5), (1, 'A', 0.6),
-//   (1, 'B', 0.5), (1, 'B', 0.6),
-//   (2, 'A', 0.5), (2, 'A', 0.6),
-//   (2, 'B', 0.5), (2, 'B', 0.6),
-//   (3, 'A', 0.5), (3, 'A', 0.6),
-//   (3, 'B', 0.5), (3, 'B', 0.6).
-//------------------------------------------------------------------------------
-TEST(ProductIteratorTest, ManualConstruction)
+#include <gtest/gtest.h>
+
+#include <Itertools/Product.hpp>
+
+using namespace enda::itertools;
+
+// Test the product of two ranges using product().
+TEST(ProductTest, TwoRanges)
 {
-    int    X[3] = {1, 2, 3};
-    char   Y[2] = {'A', 'B'};
-    double Z[2] = {0.5, 0.6};
+    std::vector<int>  v1 {1, 2, 3};
+    std::vector<char> v2 {'a', 'b'};
 
-    // Construct the innermost product iterator for Z.
-    auto it_z_begin = enda::itertools::product_iterator<double*>(std::begin(Z), std::end(Z));
-    auto it_z_end   = enda::itertools::product_iterator<double*>(std::end(Z), std::end(Z));
+    // Create a cartesian product range from v1 and v2.
+    auto prod = product(v1, v2);
 
-    // Construct the middle level iterator for Y and Z.
-    auto it_yz_begin = enda::itertools::product_iterator<char*, double*>(std::begin(Y), std::end(Y), it_z_begin, it_z_begin, it_z_end);
-    auto it_yz_end   = enda::itertools::product_iterator<char*, double*>(std::end(Y), std::end(Y), it_z_end, it_z_begin, it_z_end);
-
-    // Construct the outer level iterator for X, Y, and Z.
-    auto it_xyz_begin = enda::itertools::product_iterator<int*, char*, double*>(std::begin(X), std::end(X), it_yz_begin, it_yz_begin, it_yz_end);
-    auto it_xyz_end   = enda::itertools::product_iterator<int*, char*, double*>(std::end(X), std::end(X), it_yz_end, it_yz_begin, it_yz_end);
-
-    std::vector<std::tuple<int, char, double>> result;
-    for (auto tup : enda::itertools::range_view(it_xyz_begin, it_xyz_end))
+    // Collect the results into a vector of tuples.
+    std::vector<std::tuple<int, char>> result;
+    for (auto const& tup : prod)
     {
         result.push_back(tup);
     }
 
-    std::vector<std::tuple<int, char, double>> expected = {{1, 'A', 0.5},
-                                                           {1, 'A', 0.6},
-                                                           {1, 'B', 0.5},
-                                                           {1, 'B', 0.6},
-                                                           {2, 'A', 0.5},
-                                                           {2, 'A', 0.6},
-                                                           {2, 'B', 0.5},
-                                                           {2, 'B', 0.6},
-                                                           {3, 'A', 0.5},
-                                                           {3, 'A', 0.6},
-                                                           {3, 'B', 0.5},
-                                                           {3, 'B', 0.6}};
+    // Expected product:
+    // (1, 'a'), (1, 'b'),
+    // (2, 'a'), (2, 'b'),
+    // (3, 'a'), (3, 'b')
+    std::vector<std::tuple<int, char>> expected {{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}, {3, 'a'}, {3, 'b'}};
 
     EXPECT_EQ(result, expected);
 }
 
-//------------------------------------------------------------------------------
-// Test the high-level product function.
-// This test uses vectors X, Y, Z and the enda::itertools::product function to
-// generate the Cartesian product. For X = {1,2,3}, Y = {'A','B'}, Z = {0.5, 100.0},
-// the expected output is:
-//   (1, 'A', 0.5), (1, 'A', 100.0),
-//   (1, 'B', 0.5), (1, 'B', 100.0),
-//   (2, 'A', 0.5), (2, 'A', 100.0),
-//   (2, 'B', 0.5), (2, 'B', 100.0),
-//   (3, 'A', 0.5), (3, 'A', 100.0),
-//   (3, 'B', 0.5), (3, 'B', 100.0).
-//------------------------------------------------------------------------------
-TEST(ProductTest, HighLevelProduct)
+// Test the product of three ranges.
+TEST(ProductTest, ThreeRanges)
 {
-    std::vector<int>    X = {1, 2, 3};
-    std::vector<char>   Y = {'A', 'B'};
-    std::vector<double> Z = {0.5, 100.0};
+    std::vector<int>    v1 {1, 2};
+    std::vector<char>   v2 {'x', 'y'};
+    std::vector<double> v3 {0.1, 0.2};
 
+    // Create a product range with three ranges.
+    auto prod = product(v1, v2, v3);
+
+    // Collect the results.
     std::vector<std::tuple<int, char, double>> result;
-    for (auto tup : enda::itertools::product(X, Y, Z))
+    for (auto const& tup : prod)
     {
         result.push_back(tup);
     }
 
-    std::vector<std::tuple<int, char, double>> expected = {{1, 'A', 0.5},
-                                                           {1, 'A', 100.0},
-                                                           {1, 'B', 0.5},
-                                                           {1, 'B', 100.0},
-                                                           {2, 'A', 0.5},
-                                                           {2, 'A', 100.0},
-                                                           {2, 'B', 0.5},
-                                                           {2, 'B', 100.0},
-                                                           {3, 'A', 0.5},
-                                                           {3, 'A', 100.0},
-                                                           {3, 'B', 0.5},
-                                                           {3, 'B', 100.0}};
+    // Expected combinations: 2*2*2 = 8 tuples.
+    std::vector<std::tuple<int, char, double>> expected = {
+        {1, 'x', 0.1}, {1, 'x', 0.2}, {1, 'y', 0.1}, {1, 'y', 0.2}, {2, 'x', 0.1}, {2, 'x', 0.2}, {2, 'y', 0.1}, {2, 'y', 0.2}};
 
     EXPECT_EQ(result, expected);
+}
+
+// Test the use of make_product with an array of ranges.
+TEST(ProductTest, MakeProductFromArray)
+{
+    std::vector<int> v1 {10, 20};
+    std::vector<int> v2 {30, 40};
+
+    // Create an array of ranges.
+    std::array ranges = {v1, v2};
+
+    // Use make_product to create the cartesian product range.
+    auto prod = make_product(ranges);
+
+    // Collect the results.
+    std::vector<std::tuple<int, int>> result;
+    for (auto const& tup : prod)
+    {
+        result.push_back(tup);
+    }
+
+    // Expected product:
+    // (10, 30), (10, 40),
+    // (20, 30), (20, 40)
+    std::vector<std::tuple<int, int>> expected {{10, 30}, {10, 40}, {20, 30}, {20, 40}};
+
+    EXPECT_EQ(result, expected);
+}
+
+// Test the iterator and sentinel comparison behavior.
+// We check that iterating until the sentinel (end) stops at the correct position.
+TEST(ProductTest, IteratorSentinelComparison)
+{
+    std::vector<int>  v1 {5, 6};
+    std::vector<char> v2 {'A', 'B', 'C'};
+    auto              prod = product(v1, v2);
+
+    // Use a manual loop to count the number of iterations.
+    int count = 0;
+    for (auto it = prod.begin(); it != prod.end(); ++it)
+    {
+        ++count;
+    }
+    // Expected count: 2 * 3 = 6
+    EXPECT_EQ(count, 6);
+}
+
+// Test that dereferencing returns the correct tuple.
+TEST(ProductTest, Dereference)
+{
+    std::vector<int>  v1 {7};
+    std::vector<char> v2 {'z'};
+    auto              prod = product(v1, v2);
+
+    // Get the first (and only) tuple.
+    auto it  = prod.begin();
+    auto tup = *it; // should be (7, 'z')
+    EXPECT_EQ(std::get<0>(tup), 7);
+    EXPECT_EQ(std::get<1>(tup), 'z');
 }

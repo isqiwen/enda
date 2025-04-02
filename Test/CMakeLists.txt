@@ -4,13 +4,30 @@ find_package(Boost REQUIRED)
 
 file(GLOB_RECURSE test_sources ${CMAKE_CURRENT_LIST_DIR}/*.cpp )
 
-foreach(file ${test_sources})
-    string(REGEX REPLACE "(.*/)([a-zA-Z0-9_ ]+)(\.cpp)" "\\2" test_name ${file})
-    add_executable(${test_name} ${file})
+foreach(src_file ${test_sources})
+    # Compute the relative path of the file from the current list directory.
+    file(RELATIVE_PATH rel_path ${CMAKE_CURRENT_LIST_DIR} ${src_file})
 
-    set_target_properties(${test_name} PROPERTIES
-        FOLDER "UnitTests"
-    )
+    # Extract the directory part (exclude the file name)
+    get_filename_component(dir_path ${rel_path} DIRECTORY)
+
+    # Replace forward slashes with backslashes to match VS folder style.
+    string(REPLACE "/" "\\" group_name "${dir_path}")
+
+    get_filename_component(test_name ${src_file} NAME_WE)
+    add_executable(${test_name} ${src_file})
+
+    if(group_name STREQUAL "Test")
+        set_target_properties(${test_name} PROPERTIES
+            FOLDER "UnitTests"
+        )
+    else()
+        set_target_properties(${test_name} PROPERTIES
+            FOLDER "UnitTests/${group_name}"
+        )
+    endif()
+
+    source_group("src" FILES ${src_file})
 
     if (${CMAKE_PROJECT_NAME}_ENABLE_CODE_COVERAGE)
         target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
@@ -39,9 +56,6 @@ foreach(file ${test_sources})
     endif()
 
     target_compile_options(${test_name} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-
-    get_filename_component(test_dir ${file} DIRECTORY)
-    source_group("src" FILES ${file})
 
     add_test(
         NAME

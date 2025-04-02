@@ -25,7 +25,6 @@
 
 namespace enda
 {
-
     /**
      * @addtogroup layout_idx
      * @{
@@ -284,7 +283,7 @@ namespace enda
         }
 
         // Should we check the stride order when constructing an idx_map from a shape and strides?
-#ifdef NDA_DEBUG
+#ifdef ENDA_DEBUG
         static constexpr bool check_stride_order = true;
 #else
         static constexpr bool check_stride_order = false;
@@ -537,18 +536,21 @@ namespace enda
          * @param args Multi-dimensional index.
          * @return Linear/Flat index.
          */
-        template<typename... Args>
-        FORCEINLINE long operator()(Args const&... args) const
+
 #ifdef ENDA_ENFORCE_BOUNDCHECK
-            noexcept(false)
+        template<typename... Args>
+        FORCEINLINE long operator()(Args const&... args) const noexcept(false)
         {
             assert_in_bounds(rank(), len.data(), args...);
-#else
-            noexcept(true)
-        {
-#endif
             return call_impl(std::make_index_sequence<sizeof...(Args)> {}, args...);
         }
+#else
+        template<typename... Args>
+        FORCEINLINE long operator()(Args const&... args) const noexcept(true)
+        {
+            return call_impl(std::make_index_sequence<sizeof...(Args)> {}, args...);
+        }
+#endif
 
         /**
          * @brief Calculate the multi-dimensional index from a given linear index.

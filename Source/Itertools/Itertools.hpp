@@ -16,6 +16,7 @@
 #include "Itertools/Islice.hpp"
 #include "Itertools/Permutations.hpp"
 #include "Itertools/Product.hpp"
+#include "Itertools/Range.hpp"
 #include "Itertools/RangeView.hpp"
 #include "Itertools/Repeat.hpp"
 #include "Itertools/Starmap.hpp"

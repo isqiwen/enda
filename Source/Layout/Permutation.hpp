@@ -1,5 +1,6 @@
 /**
- * @file
+ * @file Permutation.hpp
+ *
  * @brief Provides utilities to work with permutations and to compactly encode/decode
  * std::array objects.
  */
@@ -18,7 +19,6 @@
 
 namespace enda
 {
-
     /**
      * @addtogroup utils_perms
      * @{

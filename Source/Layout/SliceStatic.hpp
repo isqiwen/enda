@@ -1,5 +1,6 @@
 /**
- * @file
+ * @file SliceStatic.hpp
+ *
  * @brief Provides utilities that determine the resulting enda::idx_map when taking a slice of an enda::idx_map.
  */
 

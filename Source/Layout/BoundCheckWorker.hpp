@@ -13,7 +13,6 @@
 
 namespace enda::detail
 {
-
     // Check the bounds when accessing single elements or slices of an array/view.
     struct bound_check_worker
     {
@@ -85,7 +84,6 @@ namespace enda::detail
 
 namespace enda
 {
-
     /**
      * @ingroup layout_utils
      * @brief Check if the given indices/arguments are within the bounds of an array/view.
