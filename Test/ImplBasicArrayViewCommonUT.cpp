@@ -1,8 +1,4 @@
-#include <gtest/gtest.h>
-
-#include "BasicArray.hpp"
-
-using namespace enda;
+#include "TestCommon.hpp"
 
 // Test constructing a basic_array from dimensions.
 TEST(BasicArrayTest, ConstructFromDimensions)

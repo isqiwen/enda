@@ -1,8 +1,4 @@
-#include <gtest/gtest.h>
-
-#include "Enda.hpp"
-
-using namespace enda;
+#include "TestCommon.hpp"
 
 // Test case for constructing a basic_array using dimensions.
 TEST(BasicArrayTest, ConstructArrayWithDimensions)
@@ -106,4 +102,87 @@ TEST(BasicArrayTest, Zeros)
 
     EXPECT_EQ(a.shape(), shape_t<2>({3, 3}));
     EXPECT_EQ(max_element(abs(a)), 0);
+}
+
+TEST(BasicArrayTest, ZeroStaticFactory)
+{
+    auto a1 = enda::array<long, 1>::zeros({3});
+    auto a2 = enda::array<long, 2>::zeros({3, 4});
+    auto a3 = enda::array<long, 3>::zeros({3, 4, 5});
+
+    EXPECT_EQ(a1.shape(), (enda::shape_t<1> {3}));
+    EXPECT_EQ(a2.shape(), (enda::shape_t<2> {3, 4}));
+    EXPECT_EQ(a3.shape(), (enda::shape_t<3> {3, 4, 5}));
+
+    EXPECT_EQ(max_element(abs(a1)), 0);
+    EXPECT_EQ(max_element(abs(a2)), 0);
+    EXPECT_EQ(max_element(abs(a3)), 0);
+}
+
+struct Int
+{
+    int i = 2;
+};
+
+TEST(BasicArrayTest, ZerosCustom)
+{
+    auto a = enda::zeros<Int>(3, 3);
+
+    EXPECT_EQ(a.shape(), (enda::shape_t<2> {3, 3}));
+    for (auto v : a)
+    {
+        EXPECT_EQ(v.i, 0);
+    }
+}
+
+TEST(BasicArrayTest, ChangeData)
+{
+    enda::array<long, 3> a(3, 3, 4);
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            for (int k = 0; k < 4; ++k)
+                a(i, j, k) = i + 10 * j + 100 * k;
+
+    auto v = a(_, 1, 2);
+
+    EXPECT_EQ((enda::slice_static::detail::slice_layout_prop(
+                  1, true, std::array<bool, 3> {1, 0, 0}, std::array<int, 3> {0, 1, 2}, enda::layout_prop_e::contiguous, 128, 0)),
+              enda::layout_prop_e::strided_1d);
+
+    EXPECT_EQ(v.shape(), (enda::shape_t<1> {3}));
+
+    EXPECT_EQ(a(1, 1, 2), 1 + 10 * 1 + 100 * 2);
+
+    a(1, 1, 2) = -28;
+    EXPECT_EQ(v(1), a(1, 1, 2));
+}
+
+TEST(BasicArrayTest, OnRawPointers)
+{
+    std::vector<long> _data(10, 3);
+
+    enda::array_view<long const, 2> a({3, 3}, _data.data());
+
+    EXPECT_EQ(a(1, 1), 3);
+}
+
+TEST(BasicArrayTest, add)
+{
+    std::vector<long> v1(10), v2(10), vr(10, -1);
+    for (int i = 0; i < 10; ++i)
+    {
+        v1[i] = i;
+        v2[i] = 10l * i;
+    }
+
+    enda::array_view<long const, 2> a({3, 3}, v1.data());
+    enda::array_view<long const, 2> b({3, 3}, v2.data());
+    enda::array_view<long, 2>       c({3, 3}, vr.data());
+
+    c = a + b;
+
+    for (int i = 0; i < 9; ++i)
+        EXPECT_EQ(vr[i], 11 * i);
+    EXPECT_EQ(vr[9], -1);
 }

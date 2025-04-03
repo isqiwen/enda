@@ -1,11 +1,4 @@
-#include <array>
-#include <gtest/gtest.h>
-#include <numeric>
-#include <stdexcept>
-
-#include "GroupIndices.hpp"
-
-using namespace enda;
+#include "TestCommon.hpp"
 
 TEST(GroupIndicesTest, ValidPartitionTest)
 {

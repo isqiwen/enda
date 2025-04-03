@@ -4,6 +4,8 @@
  * @brief Provides a CRTP base class for various iterator types in itertools.
  */
 
+#pragma once
+
 #include <cstddef>
 #include <iterator>
 

@@ -469,7 +469,7 @@ void assign_from_ndarray(RHS const& rhs)
 { // FIXME noexcept {
 #ifdef ENDA_ENFORCE_BOUNDCHECK
     if (this->shape() != rhs.shape())
-        NDA_RUNTIME_ERROR << "Error in assign_from_ndarray: Size mismatch:"
+        ENDA_RUNTIME_ERROR << "Error in assign_from_ndarray: Size mismatch:"
                           << "\n LHS.shape() = " << this->shape() << "\n RHS.shape() = " << rhs.shape();
 #endif
     // compile-time check if assignment is possible

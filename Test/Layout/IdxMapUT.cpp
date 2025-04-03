@@ -1,13 +1,11 @@
-#include <array>
-#include <cmath>
-#include <numeric>
-#include <vector>
-
 #include <gtest/gtest.h>
 
-#include "Layout/IdxMap.hpp"
+#include "Enda.hpp"
+
+#include "../GtestTools.hpp"
 
 using namespace enda;
+using enda::slice_static::slice_idx_map;
 
 // Test a fully static idx_map (e.g. a 2D array with shape [3, 4]) using C-order (row-major) layout.
 TEST(IdxMapTest, FullyStatic)
@@ -59,7 +57,7 @@ TEST(IdxMapTest, PartiallyDynamic)
     constexpr uint64_t staticExtents = encode(std::array<int, Rank> {0, 4});
     constexpr uint64_t strideOrder   = C_stride_order<Rank>; // Use C-order
     // When constructing, pass the dynamic extents (only one dynamic dimension): assume dimension 0 is actually 3.
-    std::array<long, 1>                                                      dyn = {3};
+    std::array<long, 1>                                                  dyn = {3};
     idx_map<Rank, staticExtents, strideOrder, layout_prop_e::contiguous> m(dyn);
 
     auto lengths = m.lengths();
@@ -81,7 +79,7 @@ TEST(IdxMapTest, FromShape)
     constexpr uint64_t staticExtents = encode(std::array<int, Rank> {0, 0, 0});
     constexpr uint64_t strideOrder   = C_stride_order<Rank>;
     // Provide a shape: [2, 3, 4]
-    std::array<long, Rank>                                                   shape = {2, 3, 4};
+    std::array<long, Rank>                                               shape = {2, 3, 4};
     idx_map<Rank, staticExtents, strideOrder, layout_prop_e::contiguous> m(shape);
 
     auto lengths = m.lengths();
@@ -101,9 +99,9 @@ TEST(IdxMapTest, FromShape)
 // Test multi-index mapping (operator()) and reverse mapping (to_idx) correctness.
 TEST(IdxMapTest, MultiIndexMapping)
 {
-    constexpr int                                                            Rank          = 3;
-    constexpr uint64_t                                                       staticExtents = encode(std::array<int, Rank> {2, 3, 4});
-    constexpr uint64_t                                                       strideOrder   = C_stride_order<Rank>;
+    constexpr int                                                        Rank          = 3;
+    constexpr uint64_t                                                   staticExtents = encode(std::array<int, Rank> {2, 3, 4});
+    constexpr uint64_t                                                   strideOrder   = C_stride_order<Rank>;
     idx_map<Rank, staticExtents, strideOrder, layout_prop_e::contiguous> m;
 
     // For a 2x3x4 array in C-order, the mapping is: m(i, j, k) = i*12 + j*4 + k.
@@ -123,9 +121,9 @@ TEST(IdxMapTest, MultiIndexMapping)
 // Test the transpose operation: for a 2D array, transposing should swap rows and columns.
 TEST(IdxMapTest, Transpose)
 {
-    constexpr int                                                            Rank          = 2;
-    constexpr uint64_t                                                       staticExtents = encode(std::array<int, Rank> {3, 4});
-    constexpr uint64_t                                                       strideOrder   = C_stride_order<Rank>;
+    constexpr int                                                        Rank          = 2;
+    constexpr uint64_t                                                   staticExtents = encode(std::array<int, Rank> {3, 4});
+    constexpr uint64_t                                                   strideOrder   = C_stride_order<Rank>;
     idx_map<Rank, staticExtents, strideOrder, layout_prop_e::contiguous> m;
     // For a 2D array, swapping the two dimensions corresponds to a permutation {1, 0}.
     constexpr uint64_t permutation = encode(std::array<int, Rank> {1, 0});
@@ -148,9 +146,9 @@ TEST(IdxMapTest, Transpose)
 // Test the slice interface (assuming slice_static::slice_idx_map returns a valid result).
 TEST(IdxMapTest, Slice)
 {
-    constexpr int                                                            Rank          = 3;
-    constexpr uint64_t                                                       staticExtents = encode(std::array<int, Rank> {4, 5, 6});
-    constexpr uint64_t                                                       strideOrder   = C_stride_order<Rank>;
+    constexpr int                                                        Rank          = 3;
+    constexpr uint64_t                                                   staticExtents = encode(std::array<int, Rank> {4, 5, 6});
+    constexpr uint64_t                                                   strideOrder   = C_stride_order<Rank>;
     idx_map<Rank, staticExtents, strideOrder, layout_prop_e::contiguous> m;
 
     // Call the slice() interface.
@@ -161,4 +159,133 @@ TEST(IdxMapTest, Slice)
     EXPECT_EQ(slice_result.second.rank(), 2);
     // Assume that the offset is non-negative.
     EXPECT_GE(slice_result.first, 34);
+}
+
+template<typename... INT>
+std::array<long, sizeof...(INT)> ma(INT... i)
+{
+    return {i...};
+}
+
+//-----------------------
+
+TEST(IdxMapTest, Construct)
+{
+    idx_map<3, 0, C_stride_order<3>, layout_prop_e::none> i1 {{1, 2, 3}};
+
+    std::cerr << i1 << std::endl;
+    EXPECT_TRUE(i1.lengths() == (ma(1, 2, 3)));
+    EXPECT_TRUE(i1.strides() == (ma(6, 3, 1)));
+}
+
+//-----------------------
+
+TEST(IdxMapTest, eval)
+{
+    idx_map<3, 0, C_stride_order<3>, layout_prop_e::none> i1 {{2, 7, 3}};
+    EXPECT_TRUE(i1.strides() == (ma(21, 3, 1)));
+
+    EXPECT_EQ(i1(1, 3, 2), 21 * 1 + 3 * 3 + 2 * 1);
+}
+
+//-------------------------
+
+TEST(IdxMapTest, to_idx)
+{
+    idx_map<3, 0, C_stride_order<3>, layout_prop_e::none>       iC {{2, 7, 3}};
+    idx_map<3, 0, Fortran_stride_order<3>, layout_prop_e::none> iF {{2, 7, 3}};
+    auto                                                        iP = iF.transpose<encode(std::array {0, 2, 1})>();
+
+    for (auto idx0 : range(2))
+    {
+        auto iPv = iP.slice(idx0, _, _).second;
+
+        for (auto idx1 : range(7))
+        {
+            for (auto idx2 : range(3))
+            {
+                EXPECT_TRUE(iPv.to_idx(iPv(idx2, idx1)) == ma(idx2, idx1));
+                EXPECT_TRUE(iC.to_idx(iC(idx0, idx1, idx2)) == ma(idx0, idx1, idx2));
+                EXPECT_TRUE(iF.to_idx(iF(idx0, idx1, idx2)) == ma(idx0, idx1, idx2));
+                EXPECT_TRUE(iP.to_idx(iP(idx0, idx2, idx1)) == ma(idx0, idx2, idx1));
+            }
+        }
+    }
+}
+
+TEST(IdxMapTest, slicemat)
+{
+    idx_map<2, 0, C_stride_order<2>, layout_prop_e::none> i1 {{10, 10}};
+
+    auto [offset2, i2] = slice_idx_map(i1, range(0, 2), 2);
+
+    static_assert(decltype(i2)::layout_prop == layout_prop_e::strided_1d, "000");
+}
+
+//-----------------------
+
+TEST(IdxMapTest, slice)
+{
+    idx_map<3, 0, C_stride_order<3>, layout_prop_e::none> i1 {{1, 2, 3}};
+
+    auto [offset2, i2] = slice_idx_map(i1, 0, _, 2);
+
+    idx_map<1, 0, C_stride_order<1>, layout_prop_e::strided_1d> c2 {{2}, {3}};
+
+    std::cerr << i2 << std::endl;
+    std::cerr << c2 << std::endl;
+    EXPECT_TRUE(i2 == c2);
+    EXPECT_EQ(offset2, 2);
+
+    auto [offset3, i3] = slice_idx_map(i1, _, _, _);
+    EXPECT_TRUE(i3 == i1);
+    EXPECT_EQ(offset3, 0);
+}
+
+//-----------------------
+
+TEST(IdxMapTest, ellipsis)
+{
+    EXPECT_EQ(16, encode(enda::slice_static::detail::slice_stride_order(std::array<int, 3> {0, 1, 2}, std::array<int, 2> {1, 2})));
+
+    idx_map<3, 0, C_stride_order<3>, layout_prop_e::none> i1 {{1, 2, 3}};
+    auto [offset2, i2] = slice_idx_map(i1, 0, ___);
+
+    idx_map<2, 0, C_stride_order<2>, layout_prop_e::none> c2 {{2, 3}, {3, 1}};
+
+    std::cerr << i2 << std::endl;
+    std::cerr << c2 << std::endl;
+    EXPECT_TRUE(i2 == c2);
+    EXPECT_EQ(offset2, 0);
+
+    auto [offset3, i3] = slice_idx_map(i1, ___);
+    EXPECT_TRUE(i3 == i1);
+    EXPECT_EQ(offset3, 0);
+}
+
+//-----------------------
+
+TEST(IdxMapTest, ellipsis2)
+{
+    idx_map<5, 0, C_stride_order<5>, layout_prop_e::none> i1 {{1, 2, 3, 4, 5}};
+    std::cerr << i1 << std::endl;
+
+    auto [offset2, i2] = slice_idx_map(i1, 0, ___, 3, 2);
+    idx_map<2, 0, C_stride_order<2>, layout_prop_e::none> c2 {{2, 3}, {60, 20}};
+
+    std::cerr << i2 << std::endl;
+    std::cerr << c2 << std::endl;
+    EXPECT_TRUE(i2 == c2);
+    EXPECT_EQ(offset2, i1(0, 0, 0, 3, 2));
+}
+
+TEST(IdxMapTest, for_each)
+{
+    {
+        std::stringstream fs;
+        auto              l = [&fs](int i, int j, int k) { fs << i << j << k << " "; };
+
+        for_each(std::array<long, 3> {1, 2, 3}, l);
+        EXPECT_EQ(fs.str(), "000 001 002 010 011 012 ");
+    }
 }

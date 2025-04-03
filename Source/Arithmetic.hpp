@@ -451,7 +451,7 @@ namespace enda
             static_assert(get_rank<L> == get_rank<R>, "Error in enda::operator*: Rank mismatch");
 #ifdef ENDA_ENFORCE_BOUNDCHECK
             if (l.shape() != r.shape())
-                NDA_RUNTIME_ERROR << "Error in enda::operator*: Dimension mismatch: " << l.shape() << " != " << r.shape();
+                ENDA_RUNTIME_ERROR << "Error in enda::operator*: Dimension mismatch: " << l.shape() << " != " << r.shape();
 #endif
             return expr<'*', L, R> {std::forward<L>(l), std::forward<R>(r)};
         }
@@ -534,7 +534,7 @@ namespace enda
             static_assert(get_rank<L> == get_rank<R>, "Error in enda::operator/: Rank mismatch");
 #ifdef ENDA_ENFORCE_BOUNDCHECK
             if (l.shape() != r.shape())
-                NDA_RUNTIME_ERROR << "Error in enda::operator/: Dimension mismatch: " << l.shape() << " != " << r.shape();
+                ENDA_RUNTIME_ERROR << "Error in enda::operator/: Dimension mismatch: " << l.shape() << " != " << r.shape();
 #endif
             return expr<'/', L, R> {std::forward<L>(l), std::forward<R>(r)};
         }
