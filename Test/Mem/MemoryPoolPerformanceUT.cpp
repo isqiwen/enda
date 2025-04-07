@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "Mem/Allocators.hpp"
-#include "Mem/BoostMemoryPool.hpp"
 
 using namespace enda::mem;
 
@@ -27,49 +26,6 @@ protected:
 
     void TearDown() override {}
 };
-
-TEST_F(MemoryPoolTest, BoostMemoryPoolPerformance)
-{
-    MemoryPool::init();
-
-    std::vector<std::thread> threads;
-    auto                     start = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < num_threads; ++i)
-    {
-        threads.emplace_back([]() {
-            std::random_device                     rd;
-            std::mt19937                           gen(rd());
-            std::uniform_real_distribution<double> dist(MemoryPoolTest::log_lower, MemoryPoolTest::log_upper); // 64B to 512MB
-
-            for (int j = 0; j < MemoryPoolTest::alloc_count; ++j)
-            {
-                size_t      size = std::exp(dist(gen));
-                eBlockScale scale;
-                void*       ptr = MemoryPool::Malloc(size, scale);
-                if (ptr)
-                {
-                    MemoryPool::Free(ptr, size, scale);
-                }
-                else
-                {
-                    std::cout << "allocate: " << size << " failed." << std::endl;
-                }
-            }
-        });
-    }
-
-    for (auto& t : threads)
-    {
-        t.join();
-    }
-
-    auto end      = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "Boost MemoryPool: " << duration.count() << " ms\n";
-
-    MemoryPool::release();
-}
 
 TEST_F(MemoryPoolTest, CustomMemoryPoolPerformance)
 {
@@ -123,8 +79,8 @@ TEST_F(MemoryPoolTest, CustomMemoryPoolStats)
     for (int i = 0; i < num_threads; ++i)
     {
         threads.emplace_back([]() {
-            std::random_device                    rd;
-            std::mt19937                          gen(rd());
+            std::random_device                     rd;
+            std::mt19937                           gen(rd());
             std::uniform_real_distribution<double> dist(MemoryPoolTest::log_lower, MemoryPoolTest::log_upper); // 64B to 512MB
 
             for (int j = 0; j < MemoryPoolTest::alloc_count; ++j)

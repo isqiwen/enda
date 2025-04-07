@@ -23,11 +23,13 @@
 
 namespace enda
 {
-    /// @cond
-    // Forward declarations.
+    using dcomplex = std::complex<double>;
+
     template<int Rank>
     using shape_t = std::array<long, Rank>;
 
+    /// @cond
+    // Forward declarations.
     template<int Rank, uint64_t StaticExtents, uint64_t StrideOrder, layout_prop_e LayoutProp>
     class idx_map;
 

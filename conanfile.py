@@ -26,10 +26,10 @@ class Enda(ConanFile):
         "fPIC": True
     }
 
-    requires = [
-        "zlib/1.3.1",
-        "boost/1.76.0"
-    ]
+    # requires = [
+    #     "zlib/1.3.1",
+    #     "boost/1.76.0"
+    # ]
 
     # tool_requires = [
     #     "cmake/[>=3.27.0]",

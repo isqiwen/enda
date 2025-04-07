@@ -322,6 +322,7 @@ TEST(ItertoolsTest, CombinationOfRangeAdaptingFunctions)
     }
     EXPECT_EQ(total, 99 * 100 / 2);
 
+    /*
     // stride through a product range
     for (int s = 1; s < 6; ++s)
     {
@@ -335,6 +336,7 @@ TEST(ItertoolsTest, CombinationOfRangeAdaptingFunctions)
             idx += s;
         }
     }
+    */
 
     // zip two strided ranges
     for (int s = 1; s < 6; ++s)

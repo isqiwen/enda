@@ -48,7 +48,7 @@ namespace enda::itertools
          * @param it Iterator of the original range.
          * @param stride Stride for advancing the iterator (has to be > 0).
          */
-        stride_iter(Iter it, Iter it_end, std::ptrdiff_t stride) : it(it), end_it(end_it), stride(stride)
+        stride_iter(Iter it, Iter it_end, std::ptrdiff_t stride) : it(it), end_it(it_end), stride(stride)
         {
             if (stride <= 0)
                 throw std::runtime_error("The itertools::strided range requires a positive stride");
@@ -113,7 +113,7 @@ namespace enda::itertools
          * @brief Beginning of the strided range.
          * @return itertools::stride_iter containing the begin iterator of the original range and the stride.
          */
-        [[nodiscard]] iterator begin() noexcept { return iterator(std::begin(rg), std::cend(rg), stride); }
+        [[nodiscard]] iterator begin() noexcept { return {std::begin(rg), std::end(rg), stride}; }
 
         /// Const version of begin().
         [[nodiscard]] const_iterator cbegin() const noexcept { return {std::cbegin(rg), std::cend(rg), stride}; }

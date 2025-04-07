@@ -238,11 +238,21 @@ namespace enda
             auto dims_to_check = std::vector<int> {};
             dims_to_check.reserve(Rank);
             for (auto dim : stride_order)
+            {
                 if (lenptr[dim] > 1)
+                {
                     dims_to_check.push_back(dim);
+                }
+            }
             for (int n = 1; n < dims_to_check.size(); ++n)
+            {
+                int a = strptr[dims_to_check[n - 1]];
+                int b = strptr[dims_to_check[n]];
                 if (std::abs(strptr[dims_to_check[n - 1]]) < std::abs(strptr[dims_to_check[n]]))
+                {
                     return false;
+                }
+            }
             return true;
         }
 

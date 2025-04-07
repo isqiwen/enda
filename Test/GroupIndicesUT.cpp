@@ -50,11 +50,11 @@ TEST(GroupIndicesTest, GroupIndicesLayoutValidTest)
 {
     // Use group_indices_layout to construct a new idx_map.
     // Assume the original idx_map has Rank=3, extents = {2, 3, 4}, corresponding to a contiguous array
-    // (e.g., row-major order). For testing, we use StrideOrder = 18 (i.e., static stride_order is {2,1,0}) and layout is contiguous.
+    // (e.g., col-major order). For testing, we use StrideOrder = 18 (i.e., static stride_order is {2,1,0}) and layout is contiguous.
     using orig_map_t                 = idx_map<3, 0, 18, layout_prop_e::contiguous>;
     std::array<long, 3> orig_extents = {2, 3, 4};
     // For a contiguous array, typically strides = {12, 4, 1}.
-    std::array<long, 3> orig_strides = {12, 4, 1};
+    std::array<long, 3> orig_strides = {1, 2, 6};
     orig_map_t          orig_map(orig_extents, orig_strides);
 
     // Grouping: combine dimensions 0 and 1 into one group, with dimension 2 as a separate group.
@@ -67,7 +67,7 @@ TEST(GroupIndicesTest, GroupIndicesLayoutValidTest)
     std::array<long, 2> expected_extents = {6, 4};
 
     // New strides: first group stride = min(strides[0], strides[1]) = min(12, 4) = 4, second group stride = strides[2] = 1.
-    std::array<long, 2> expected_strides = {4, 1};
+    std::array<long, 2> expected_strides = {1, 6};
 
     // Based on the previous test, the new static stride order should be {1, 0}.
     constexpr std::array<int, 2> expected_stride_order = {1, 0};
