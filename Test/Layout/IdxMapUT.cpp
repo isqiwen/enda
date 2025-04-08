@@ -1,10 +1,5 @@
-#include <gtest/gtest.h>
+#include "../TestCommon.hpp"
 
-#include "Enda.hpp"
-
-#include "../GtestTools.hpp"
-
-using namespace enda;
 using enda::slice_static::slice_idx_map;
 
 // Test a fully static idx_map (e.g. a 2D array with shape [3, 4]) using C-order (row-major) layout.
