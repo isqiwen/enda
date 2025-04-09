@@ -1,5 +1,3 @@
-include_directories(${CMAKE_CURRENT_LIST_DIR}/../Source)
-
 file(GLOB_RECURSE test_sources ${CMAKE_CURRENT_LIST_DIR}/*.cpp )
 
 foreach(src_file ${test_sources})
@@ -37,7 +35,7 @@ foreach(src_file ${test_sources})
         find_package(GTest REQUIRED)
         target_link_libraries(${test_name}
             PUBLIC
-                ${RUNTIME_TARGET}
+                Enda::Enda
                 GTest::GTest
                 GTest::Main
         )
@@ -45,7 +43,7 @@ foreach(src_file ${test_sources})
         find_package(Catch2 REQUIRED)
         target_link_libraries(${test_name}
             PUBLIC
-                ${RUNTIME_TARGET}
+                Enda::Enda
                 Catch2::Catch2
         )
     else()
@@ -53,6 +51,7 @@ foreach(src_file ${test_sources})
     endif()
 
     target_compile_options(${test_name} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+    target_compile_features(${test_name} PRIVATE cxx_std_20)
 
     add_test(
         NAME

@@ -14,3 +14,10 @@
 
 using namespace std::complex_literals;
 using namespace enda;
+
+#define EXPECT_PRINT(X, Y) \
+    { \
+        std::stringstream ss; \
+        ss << Y; \
+        EXPECT_EQ(X, ss.str()); \
+    }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.27.0)
 
 project(
-    enda
+    Enda
     VERSION 0.1
     DESCRIPTION "Efficient NdArray"
     HOMEPAGE_URL "%%github.com/isqiwen/enda%%"
@@ -29,4 +29,8 @@ add_subdirectory(Source)
 if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
     enable_testing()
     add_subdirectory(Test)
+endif()
+
+if(${PROJECT_NAME}_ENABLE_BENCHMARKS)
+    add_subdirectory(Benchmarks)
 endif()

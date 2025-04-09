@@ -75,7 +75,7 @@ namespace enda
             using element_type = T;
 
             /// Restricted pointer type to the data.
-            using pointer = T* __restrict;
+            using pointer = T* RESTRICT;
 
             /// Reference type to the data.
             using reference = T&;

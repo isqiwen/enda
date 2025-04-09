@@ -326,3 +326,75 @@ TEST(HandleBorrowedTest, WithOffset)
         EXPECT_EQ(hborrowed[i], hheap[i + 5]);
     }
 }
+
+TEST(Storage, HR)
+{
+    handle_heap<int> h {10};
+
+    // make sure it is a copy
+    h.data()[2] = 89;
+    handle_heap<int> h3 {h};
+    h.data()[2] = 0;
+    EXPECT_EQ(h3.data()[2], 89);
+}
+
+// ---- Construct R, S
+TEST(Storage, HSR)
+{
+    handle_heap<int> h {10};
+
+    handle_shared<int> s {h};
+
+    EXPECT_EQ(s.refcount(), 2);
+}
+
+// ---- More complex
+TEST(Ref, HSRS)
+{
+    handle_heap<int> h {10};
+
+    handle_shared<int> s {h};
+    EXPECT_EQ(s.refcount(), 2);
+
+    s = handle_shared<int> {h};
+    EXPECT_EQ(s.refcount(), 2);
+
+    handle_shared<int> s2 {h};
+    EXPECT_EQ(s.refcount(), 3);
+    s = s2;
+    EXPECT_EQ(s.refcount(), 3);
+}
+
+struct Number
+{
+    int               u = 9;
+    static inline int c = 0;
+    Number()
+    {
+        c++;
+        std::cerr << "Constructing Number \n";
+    };
+    ~Number()
+    {
+        c--;
+        std::cerr << "Destructing Number \n";
+    };
+};
+
+TEST(Storage, HR_with_cd)
+{
+    {
+        handle_heap<Number> h {5};
+    }
+    EXPECT_EQ(Number::c, 0);
+}
+
+// --- check with a shared_ptr
+
+TEST(Storage, HR_with_sharedPtr)
+{
+    {
+        handle_shared<Number> s;
+    }
+    EXPECT_EQ(Number::c, 0);
+}

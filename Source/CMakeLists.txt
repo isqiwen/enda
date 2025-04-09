@@ -1,4 +1,4 @@
-set(LIBRARY_NAME "enda")
+set(LIBRARY_NAME "Enda")
 
 file(GLOB_RECURSE itertools_src_files ${CMAKE_SOURCE_DIR}/Source/Itertools/*.hpp)
 file(GLOB_RECURSE layout_src_files ${CMAKE_SOURCE_DIR}/Source/Layout/*.hpp)
@@ -12,10 +12,16 @@ source_group("Mem" FILES ${mem_src_files})
 source_group("StdUtil" FILES ${stdutil_src_files})
 
 add_library(${LIBRARY_NAME} INTERFACE ${src_files})
-add_library(enda::${LIBRARY_NAME} ALIAS ${LIBRARY_NAME})
+add_library(Enda::${LIBRARY_NAME} ALIAS ${LIBRARY_NAME})
 
 # Include module for GNU standard installation directories
 include(GNUInstallDirs)
+
+target_include_directories(${LIBRARY_NAME}
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Source>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Enda>
+)
 
 # Install library and executable and export as a set
 install(TARGETS

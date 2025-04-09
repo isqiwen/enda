@@ -74,6 +74,14 @@
     #endif
 #endif
 
+// ---------------- Restrict ----------------
+
+#if defined(_MSC_VER)
+    #define RESTRICT __restrict
+#else
+    #define RESTRICT __restrict__
+#endif
+
 // ---------------- Debugging ----------------
 
 #ifdef NDEBUG

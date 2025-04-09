@@ -1,13 +1,4 @@
-#include <array>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <tuple>
-#include <vector>
-
-#include <gtest/gtest.h>
-
-#include <Itertools/Range.hpp>
+#include "../TestCommon.hpp"
 
 using namespace enda::itertools;
 
@@ -128,4 +119,28 @@ TEST(RangeTest, ProductRangeArray)
     }
     std::vector<std::tuple<long, long>> expected = {{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}, {1, 2}};
     EXPECT_EQ(result, expected);
+}
+
+TEST(RangeTest, Arange)
+{
+    for (auto first : range(-100, 100))
+    {
+        for (auto last : range(-100, 100))
+        {
+            for (auto step : range(-100, 100))
+            {
+                if (step == 0)
+                    continue;
+                auto a = arange(first, last, step);
+                int  n = 0;
+                for (auto i = first; step > 0 ? i < last : i > last; i = i + step)
+                    EXPECT_EQ(a[n++], i);
+            }
+        }
+    }
+
+    for (auto N : range(100))
+    {
+        EXPECT_EQ(enda::sum(arange(N)), N * (N - 1) / 2);
+    }
 }
