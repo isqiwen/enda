@@ -26,15 +26,15 @@ foreach(src_file ${test_sources})
     source_group("src" FILES ${src_file})
 
     if (${CMAKE_PROJECT_NAME}_ENABLE_CODE_COVERAGE)
-        target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
-        target_link_options(${CMAKE_PROJECT_NAME} PUBLIC -fprofile-arcs -ftest-coverage)
+        target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -O0 -g -fprofile-arcs -ftest-coverage)
+        target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -fprofile-arcs -ftest-coverage)
         message(STATUS "Code coverage is enabled for GCC.")
     endif()
 
     if(${CMAKE_PROJECT_NAME}_USE_GTEST)
         find_package(GTest REQUIRED)
         target_link_libraries(${test_name}
-            PUBLIC
+            PRIVATE
                 Enda::Enda
                 GTest::GTest
                 GTest::Main
@@ -42,7 +42,7 @@ foreach(src_file ${test_sources})
     elseif(${CMAKE_PROJECT_NAME}_USE_CATCH2)
         find_package(Catch2 REQUIRED)
         target_link_libraries(${test_name}
-            PUBLIC
+            PRIVATE
                 Enda::Enda
                 Catch2::Catch2
         )
@@ -51,7 +51,6 @@ foreach(src_file ${test_sources})
     endif()
 
     target_compile_options(${test_name} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-    target_compile_features(${test_name} PRIVATE cxx_std_20)
 
     add_test(
         NAME

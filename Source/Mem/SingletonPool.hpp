@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <chrono>
 
 #include "Exceptions.hpp"
 #include "Macros.hpp"

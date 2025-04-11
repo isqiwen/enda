@@ -14,6 +14,8 @@ source_group("StdUtil" FILES ${stdutil_src_files})
 add_library(${LIBRARY_NAME} INTERFACE ${src_files})
 add_library(Enda::${LIBRARY_NAME} ALIAS ${LIBRARY_NAME})
 
+target_link_libraries(${LIBRARY_NAME} INTERFACE ProjectOptions)
+
 # Include module for GNU standard installation directories
 include(GNUInstallDirs)
 
