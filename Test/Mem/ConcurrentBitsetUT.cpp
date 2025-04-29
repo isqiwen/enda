@@ -1,11 +1,4 @@
-#include <chrono>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <set>
-#include <thread>
-#include <vector>
-
-#include "Mem/ConcurrentBitset.hpp"
+#include "../TestCommon.hpp"
 
 using namespace enda::mem;
 

@@ -11,15 +11,10 @@
 
 namespace enda::itertools
 {
-
-    /// @cond
-    // Forward declaration.
     template<typename Iter, typename Value, typename Tag = std::forward_iterator_tag, typename Reference = Value&, typename Difference = std::ptrdiff_t>
     struct iterator_facade;
-    /// @endcond
 
     /**
-     * @ingroup utilities
      * @brief CRTP base class for various iterator types in itertools.
      *
      * @details All iterator types defined in itertools are derived from this class. It uses the
@@ -52,19 +47,19 @@ namespace enda::itertools
         [[nodiscard]] Iter const& self() const { return static_cast<const Iter&>(*this); }
 
     public:
-        /// Value type of the derived iterator.
+        // Value type of the derived iterator.
         using value_type = Value;
 
-        /// Reference type of the derived iterator.
+        // Reference type of the derived iterator.
         using reference = Reference;
 
-        /// Pointer type of the derived iterator.
+        // Pointer type of the derived iterator.
         using pointer = Value*;
 
-        /// Difference type of the derived iterator.
+        // Difference type of the derived iterator.
         using difference_type = Difference;
 
-        /// Iterator category of the derived iterator.
+        // Iterator category of the derived iterator.
         using iterator_category = std::forward_iterator_tag;
 
         /**

@@ -14,17 +14,8 @@
 
 namespace enda
 {
-
-    /**
-     * @addtogroup layout_pols
-     * @{
-     */
-
-    /// @cond
-    // Forward declarations.
     struct C_stride_layout;
     struct F_stride_layout;
-    /// @endcond
 
     /**
      * @brief Contiguous layout policy with C-order (row-major order).
@@ -32,14 +23,14 @@ namespace enda
      */
     struct C_layout
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = idx_map<Rank, 0, C_stride_order<Rank>, layout_prop_e::contiguous>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = C_stride_layout;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = C_layout;
     };
 
@@ -49,14 +40,14 @@ namespace enda
      */
     struct F_layout
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = idx_map<Rank, 0, Fortran_stride_order<Rank>, layout_prop_e::contiguous>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = F_stride_layout;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = F_layout;
     };
 
@@ -66,14 +57,14 @@ namespace enda
      */
     struct C_stride_layout
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = idx_map<Rank, 0, C_stride_order<Rank>, layout_prop_e::none>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = C_stride_layout;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = C_layout;
     };
 
@@ -83,14 +74,14 @@ namespace enda
      */
     struct F_stride_layout
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = idx_map<Rank, 0, Fortran_stride_order<Rank>, layout_prop_e::none>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = F_stride_layout;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = F_layout;
     };
 
@@ -104,14 +95,14 @@ namespace enda
     template<uint64_t StaticExtents, uint64_t StrideOrder, layout_prop_e LayoutProp>
     struct basic_layout
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = idx_map<Rank, StaticExtents, StrideOrder, LayoutProp>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = basic_layout<StaticExtents, StrideOrder, layout_prop_e::none>;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = basic_layout<StaticExtents, StrideOrder, layout_prop_e::contiguous>;
     };
 
@@ -136,12 +127,8 @@ namespace enda
 
     namespace detail
     {
-
-        /// @cond
-        // Forward declarations.
         template<typename L>
         struct layout_to_policy;
-        /// @endcond
 
         // Get the correct layout policy given a general enda::idx_map.
         template<int Rank, uint64_t StaticExtents, uint64_t StrideOrder, layout_prop_e LayoutProp>
@@ -179,7 +166,5 @@ namespace enda
         };
 
     } // namespace detail
-
-    /** @} */
 
 } // namespace nda

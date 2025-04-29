@@ -18,19 +18,6 @@
 
 namespace enda
 {
-
-    /**
-     * @addtogroup av_math
-     * @{
-     */
-
-    /**
-     * @brief Get the real part of a scalar.
-     *
-     * @tparam T Scalar type.
-     * @param t Scalar value.
-     * @return Real part of the scalar.
-     */
     template<typename T>
     auto real(T t) requires(enda::is_scalar_v<T>)
     {
@@ -44,13 +31,6 @@ namespace enda
         }
     }
 
-    /**
-     * @brief Get the complex conjugate of a scalar.
-     *
-     * @tparam T Scalar type.
-     * @param t Scalar value.
-     * @return The given scalar if it is not complex, otherwise its complex conjugate.
-     */
     template<typename T>
     auto conj(T t) requires(enda::is_scalar_v<T>)
     {
@@ -64,38 +44,12 @@ namespace enda
         }
     }
 
-    /**
-     * @brief Get the squared absolute value of a double.
-     *
-     * @param x Double value.
-     * @return Squared absolute value of the given double.
-     */
     inline double abs2(double x) { return x * x; }
 
-    /**
-     * @brief Get the squared absolute value of a std::complex<double>.
-     *
-     * @param z std::complex<double> value.
-     * @return Squared absolute value of the given complex number.
-     */
     inline double abs2(std::complex<double> z) { return (conj(z) * z).real(); }
 
-    /**
-     * @brief Check if a std::complex<double> is NaN.
-     *
-     * @param z std::complex<double> value.
-     * @return True if either the real or imaginary part of the given complex number is `NaN`, false otherwise.
-     */
     inline bool isnan(std::complex<double> const& z) { return std::isnan(z.real()) or std::isnan(z.imag()); }
 
-    /**
-     * @brief Calculate the integer power of an integer.
-     *
-     * @tparam T Integer type.
-     * @param x Base value.
-     * @param n Exponent value.
-     * @return The result of the base raised to the power of the exponent.
-     */
     template<typename T>
     T pow(T x, int n) requires(std::is_integral_v<T>)
     {
@@ -105,14 +59,6 @@ namespace enda
         return r;
     }
 
-    /**
-     * @brief Lazy, coefficient-wise power function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @param p Exponent value.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto pow(A&& a, double p)
     {
@@ -122,20 +68,11 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /// Wrapper for enda::conj.
     struct conj_f
     {
-        /// Function call operator that forwards the call to enda::conj.
         auto operator()(auto const& x) const { return conj(x); };
     };
 
-    /**
-     * @brief Lazy, coefficient-wise complex conjugate function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object if the array is complex valued, otherwise the array itself.
-     */
     template<Array A>
     decltype(auto) conj(A&& a)
     {
@@ -145,13 +82,6 @@ namespace enda
             return std::forward<A>(a);
     }
 
-    /**
-     * @brief Lazy, coefficient-wise abs function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto abs(A&& a)
     {
@@ -161,13 +91,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise imag function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto imag(A&& a)
     {
@@ -177,13 +100,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise floor function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto floor(A&& a)
     {
@@ -193,52 +109,24 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise real function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto real(A&& a)
     {
         return enda::map([](auto const& x) { return real(x); })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise abs2 function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto abs2(A&& a)
     {
         return enda::map([](auto const& x) { return abs2(x); })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise isnan function for enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto isnan(A&& a)
     {
         return enda::map([](auto const& x) { return isnan(x); })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise exp function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto exp(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -248,13 +136,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise cos function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto cos(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -264,13 +145,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise sin function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto sin(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -280,13 +154,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise tan function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto tan(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -296,13 +163,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise cosh function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto cosh(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -312,13 +172,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise sinh function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto sinh(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -328,13 +181,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise tanh function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto tanh(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -344,13 +190,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise acos function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto acos(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -360,13 +199,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise asin function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto asin(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -376,13 +208,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise atan function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto atan(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -392,13 +217,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise log function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto log(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -408,13 +226,6 @@ namespace enda
         })(std::forward<A>(a));
     }
 
-    /**
-     * @brief Lazy, coefficient-wise sqrt function for non-matrix enda::Array types.
-     *
-     * @tparam A enda::Array type.
-     * @param a enda::Array object.
-     * @return A lazy enda::expr_call object.
-     */
     template<Array A>
     auto sqrt(A&& a) requires(get_algebra<A> != 'M')
     {
@@ -423,7 +234,5 @@ namespace enda
             return sqrt(x);
         })(std::forward<A>(a));
     }
-
-    /** @} */
 
 } // namespace enda

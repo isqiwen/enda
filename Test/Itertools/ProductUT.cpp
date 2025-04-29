@@ -1,12 +1,4 @@
-#include <array>
-#include <sstream>
-#include <string>
-#include <tuple>
-#include <vector>
-
-#include <gtest/gtest.h>
-
-#include <Itertools/Product.hpp>
+#include "../TestCommon.hpp"
 
 using namespace enda::itertools;
 

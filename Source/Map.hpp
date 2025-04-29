@@ -17,15 +17,11 @@
 
 namespace enda
 {
-
-    /// @cond
-    // Forward declarations.
     template<typename F, Array... A>
     struct expr_call;
 
     template<class F>
     struct mapped;
-    /// @endcond
 
     namespace detail
     {
@@ -40,7 +36,6 @@ namespace enda
     } // namespace detail
 
     /**
-     * @ingroup av_utils
      * @brief Get the resulting algebra of a function call expression involving arrays/views.
      *
      * @details If one of the algebras of the arguments is different, the resulting algebra is 'N'.
@@ -50,11 +45,6 @@ namespace enda
      */
     template<typename F, Array... As>
     constexpr char get_algebra<expr_call<F, As...>> = detail::_impl_find_common_algebra(get_algebra<As>...);
-
-    /**
-     * @addtogroup av_math
-     * @{
-     */
 
     /**
      * @brief A lazy function call expression on arrays/views.
@@ -77,16 +67,16 @@ namespace enda
     template<typename F, Array... As>
     struct expr_call
     {
-        /// Callable object of the expression.
+        // Callable object of the expression.
         F f;
 
-        /// Tuple containing the enda::Array arguments.
+        // Tuple containing the enda::Array arguments.
         std::tuple<const As...> a;
 
     private:
         // Implementation of the function call operator.
         template<size_t... Is, typename... Args>
-        [[gnu::always_inline]] [[nodiscard]] auto _call(std::index_sequence<Is...>, Args const&... args) const
+        FORCEINLINE [[nodiscard]] auto _call(std::index_sequence<Is...>, Args const&... args) const
         {
             // if args contains a range, we need to return an expr_call on the resulting slice
             if constexpr ((is_range_or_ellipsis<Args> or ... or false))
@@ -101,7 +91,7 @@ namespace enda
 
         // Implementation of the subscript operator.
         template<size_t... Is, typename Arg>
-        [[gnu::always_inline]] auto _call_bra(std::index_sequence<Is...>, Arg const& arg) const
+        FORCEINLINE auto _call_bra(std::index_sequence<Is...>, Arg const& arg) const
         {
             return f(std::get<Is>(a)[arg]...);
         }
@@ -164,7 +154,7 @@ namespace enda
     template<class F>
     struct mapped
     {
-        /// Callable object.
+        // Callable object.
         F f;
 
         /**
@@ -198,7 +188,5 @@ namespace enda
     {
         return {std::move(f)};
     }
-
-    /** @} */
 
 } // namespace enda

@@ -15,12 +15,7 @@
 namespace enda
 {
 
-    /**
-     * @addtogroup layout_utils
-     * @{
-     */
-
-    /// Using declaration for itertools::range.
+    // Using declaration for itertools::range.
     using itertools::range;
 
     /**
@@ -48,7 +43,7 @@ namespace enda
      */
     inline std::ostream& operator<<(std::ostream& os, ellipsis) noexcept { return os << "___"; }
 
-    /// Constexpr variable that is true if the parameter pack `Args` contains an enda::ellipsis.
+    // Constexpr variable that is true if the parameter pack `Args` contains an enda::ellipsis.
     template<typename... Args>
     constexpr bool ellipsis_is_present = is_any_of<ellipsis, std::remove_cvref_t<Args>...>;
 
@@ -58,7 +53,5 @@ namespace enda
      */
     template<typename T>
     constexpr bool is_range_or_ellipsis = is_any_of<std::remove_cvref_t<T>, range, range::all_t, ellipsis>;
-
-    /** @} */
 
 } // namespace enda

@@ -12,7 +12,7 @@
 
 namespace enda::mem
 {
-    /// Should we initialize memory for complex double types to zero.
+    // Should we initialize memory for complex double types to zero.
     static constexpr bool init_dcmplx = true;
 
     /**
@@ -48,11 +48,8 @@ namespace enda::mem
     // Instance of enda::mem::init_zero_t.
     inline static constexpr init_zero_t init_zero {};
 
-    /// @cond
-    // Forward declaration.
     template<typename T, AddressSpace AdrSp = Host>
     struct handle_shared;
-    /// @endcond
 
     /**
      * @brief A handle for a memory block on the heap.
@@ -117,13 +114,13 @@ namespace enda::mem
         static void deleter(void* p) noexcept { destruct(*((blk_T_t*)p)); }
 
     public:
-        /// Value type of the data.
+        // Value type of the data.
         using value_type = T;
 
-        /// enda::mem::Allocator type.
+        // enda::mem::Allocator type.
         using allocator_type = A;
 
-        /// enda::mem::AddressSpace in which the memory is allocated.
+        // enda::mem::AddressSpace in which the memory is allocated.
         static constexpr auto address_space = allocator_type::address_space;
 
         /**
@@ -148,7 +145,7 @@ namespace enda::mem
                 destruct({_data, _size});
         }
 
-        /// Default constructor leaves the handle in a null state (`nullptr` and size 0).
+        // Default constructor leaves the handle in a null state (`nullptr` and size 0).
         handle_heap() = default;
 
         /**
@@ -381,10 +378,10 @@ namespace enda::mem
         std::array<char, sizeof(T) * Size> buffer;
 
     public:
-        /// Value type of the data.
+        // Value type of the data.
         using value_type = T;
 
-        /// enda::mem::AddressSpace in which the memory is allocated (always on `Host`).
+        // enda::mem::AddressSpace in which the memory is allocated (always on `Host`).
         static constexpr auto address_space = Host;
 
         /**
@@ -401,7 +398,7 @@ namespace enda::mem
             }
         }
 
-        /// Default constructor leaves the data uninitialized.
+        // Default constructor leaves the data uninitialized.
         handle_stack() = default;
 
         /**
@@ -440,10 +437,10 @@ namespace enda::mem
             return *this;
         }
 
-        /// Construct a handle and do not initialize the data.
+        // Construct a handle and do not initialize the data.
         handle_stack(long /*size*/, do_not_initialize_t) {}
 
-        /// Construct a handle and initialize the data to zero (only for scalar and complex types).
+        // Construct a handle and initialize the data to zero (only for scalar and complex types).
         handle_stack(long /*size*/, init_zero_t)
         {
             static_assert(std::is_scalar_v<T> or is_complex_v<T>, "enda::mem::handle_stack can only be initialized to zero for scalar and complex types");
@@ -550,13 +547,13 @@ namespace enda::mem
         }
 
     public:
-        /// Value type of the data.
+        // Value type of the data.
         using value_type = T;
 
-        /// enda::mem::AddressSpace in which the memory is allocated.
+        // enda::mem::AddressSpace in which the memory is allocated.
         static constexpr auto address_space = Host;
 
-        /// Default constructor.
+        // Default constructor.
         handle_sso() {}; // NOLINT (user-defined constructor to avoid value initialization of the buffer)
 
         /**
@@ -856,13 +853,13 @@ namespace enda::mem
         std::shared_ptr<void> sptr;
 
     public:
-        /// Value type of the data.
+        // Value type of the data.
         using value_type = T;
 
-        /// enda::mem::AddressSpace in which the memory is allocated.
+        // enda::mem::AddressSpace in which the memory is allocated.
         static constexpr auto address_space = AdrSp;
 
-        /// Default constructor leaves the handle in a null state (`nullptr` and size 0).
+        // Default constructor leaves the handle in a null state (`nullptr` and size 0).
         handle_shared() = default;
 
         /**

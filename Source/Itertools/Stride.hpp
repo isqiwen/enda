@@ -16,9 +16,7 @@
 
 namespace enda::itertools
 {
-
     /**
-     * @ingroup range_iterators
      * @brief Iterator for a itertools::strided range.
      *
      * @details It stores an iterator of the original range as well as a stride. Incrementing advances the original
@@ -31,15 +29,15 @@ namespace enda::itertools
     template<typename Iter>
     struct stride_iter : iterator_facade<stride_iter<Iter>, typename std::iterator_traits<Iter>::value_type>
     {
-        /// Iterator of the original range.
+        // Iterator of the original range.
         Iter it;
 
         Iter end_it;
 
-        /// Number of elements in the original range to skip when incrementing the iterator.
+        // Number of elements in the original range to skip when incrementing the iterator.
         std::ptrdiff_t stride {1};
 
-        /// Default constructor.
+        // Default constructor.
         stride_iter() = default;
 
         /**
@@ -54,7 +52,7 @@ namespace enda::itertools
                 throw std::runtime_error("The itertools::strided range requires a positive stride");
         }
 
-        /// Increment the iterator by advancing the original iterator by the stride.
+        // Increment the iterator by advancing the original iterator by the stride.
         void increment() { advance(it, stride, end_it); }
 
         /**
@@ -83,19 +81,19 @@ namespace enda::itertools
     template<typename R>
     struct strided
     {
-        /// Original range.
+        // Original range.
         R rg;
 
-        /// Number of elements in the original range to skip when incrementing the iterator.
+        // Number of elements in the original range to skip when incrementing the iterator.
         std::ptrdiff_t stride;
 
-        /// Iterator type of the strided range.
+        // Iterator type of the strided range.
         using iterator = stride_iter<decltype(std::begin(rg))>;
 
-        /// Const iterator type of the strided range.
+        // Const iterator type of the strided range.
         using const_iterator = stride_iter<decltype(std::cbegin(rg))>;
 
-        /// Default equal-to operator.
+        // Default equal-to operator.
         [[nodiscard]] bool operator==(strided const&) const = default;
 
     private:
@@ -115,10 +113,10 @@ namespace enda::itertools
          */
         [[nodiscard]] iterator begin() noexcept { return {std::begin(rg), std::end(rg), stride}; }
 
-        /// Const version of begin().
+        // Const version of begin().
         [[nodiscard]] const_iterator cbegin() const noexcept { return {std::cbegin(rg), std::cend(rg), stride}; }
 
-        /// Const overload of begin().
+        // Const overload of begin().
         [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
 
         /**
@@ -128,13 +126,13 @@ namespace enda::itertools
          */
         [[nodiscard]] iterator end() noexcept { return {std::next(std::begin(rg), end_offset()), std::next(std::begin(rg), end_offset()), stride}; }
 
-        /// Const version of end().
+        // Const version of end().
         [[nodiscard]] const_iterator cend() const noexcept
         {
             return {std::next(std::cbegin(rg), end_offset()), std::next(std::begin(rg), end_offset()), stride};
         }
 
-        /// Const overload of end().
+        // Const overload of end().
         [[nodiscard]] const_iterator end() const noexcept { return cend(); }
     };
 

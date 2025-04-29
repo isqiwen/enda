@@ -43,7 +43,7 @@ template<typename X, typename Y>
         return ::testing::AssertionFailure() << "abs(x - y) = " << abs(x - y) << "\n x = " << x << "\n y = " << y;
 }
 
-/// Macro that expects ::complex_are_close to return true.
+// Macro that expects ::complex_are_close to return true.
 #define EXPECT_COMPLEX_NEAR(X, ...) EXPECT_TRUE(complex_are_close(X, __VA_ARGS__))
 
 /**
@@ -68,10 +68,10 @@ template<typename X, typename Y>
         return ::testing::AssertionFailure() << "Arrays have different elements\n X = " << x << "\n Y = " << y;
 }
 
-/// Macro that expects ::array_are_equal to return true.
+// Macro that expects ::array_are_equal to return true.
 #define EXPECT_EQ_ARRAY(X, Y) EXPECT_TRUE(array_are_equal(X, Y));
 
-/// Macro that expects ::array_are_equal to return true.
+// Macro that expects ::array_are_equal to return true.
 #define EXPECT_ARRAY_EQ(X, Y) EXPECT_TRUE(array_are_equal(X, Y));
 
 /**
@@ -109,7 +109,7 @@ template<typename X, typename Y>
         return ::testing::AssertionFailure() << "max_element(abs(X - Y)) = " << maxdiff << "\n X = " << x_reg << "\n Y = " << y_reg;
 }
 
-/// Macro that expects ::array_are_close to return true.
+// Macro that expects ::array_are_close to return true.
 #define EXPECT_ARRAY_NEAR(X, ...) EXPECT_TRUE(array_are_close(X, __VA_ARGS__))
 
 /**
@@ -133,7 +133,7 @@ template<typename X>
         return ::testing::AssertionFailure() << "max_element(abs(X)) = " << max << "\n X = " << x_reg;
 }
 
-/// Macro that expects ::array_almost_zero to return true.
+// Macro that expects ::array_almost_zero to return true.
 #define EXPECT_ARRAY_ZERO(X) EXPECT_TRUE(array_almost_zero(X))
 
 /**
@@ -156,7 +156,7 @@ template<typename X, typename Y>
     return ::testing::AssertionSuccess();
 }
 
-/// Macro that expects ::generic_are_near to return true.
+// Macro that expects ::generic_are_near to return true.
 #define EXPECT_CLOSE(X, Y) EXPECT_TRUE(generic_are_near(X, Y));
 
 /** @} */

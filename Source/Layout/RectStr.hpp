@@ -23,21 +23,11 @@
 
 namespace enda
 {
-
-    /**
-     * @addtogroup layout_idx
-     * @{
-     */
-
-    /// @cond
-    // Forward declaration.
     template<int Rank, uint64_t StaticExtents, uint64_t StrideOrder, layout_prop_e LayoutProp>
     class rect_str;
-    /// @endcond
 
     namespace detail
     {
-
         // Get the corresponding enda::rect_str type from a given enda::idx_map type.
         template<typename T>
         struct rect_str_from_base;
@@ -116,11 +106,11 @@ namespace enda
             return *s_indices;
         }
 
-        /// Alias template to check if type `T` can be used to access a specific element.
+        // Alias template to check if type `T` can be used to access a specific element.
         template<typename T>
         static constexpr int argument_is_allowed_for_call = base_t::template argument_is_allowed_for_call<T> or std::is_constructible_v<std::string, T>;
 
-        /// Alias template to check if type `T` can be used to either access a specific element or a slice of elements.
+        // Alias template to check if type `T` can be used to either access a specific element or a slice of elements.
         template<typename T>
         static constexpr int argument_is_allowed_for_call_or_slice =
             base_t::template argument_is_allowed_for_call_or_slice<T> or std::is_constructible_v<std::string, T>;
@@ -201,16 +191,16 @@ namespace enda
             requires((base_t::n_dynamic_extents != Rank) and (base_t::n_dynamic_extents != 0)) : base_t {shape}
         {}
 
-        /// Default copy constructor.
+        // Default copy constructor.
         rect_str(rect_str const&) = default;
 
-        /// Default move constructor.
+        // Default move constructor.
         rect_str(rect_str&&) = default;
 
-        /// Default copy assignment operator.
+        // Default copy assignment operator.
         rect_str& operator=(rect_str const&) = default;
 
-        /// Default move assignment operator.
+        // Default move assignment operator.
         rect_str& operator=(rect_str&&) = default;
 
     private:
@@ -359,18 +349,8 @@ namespace enda
         }
     };
 
-    /** @} */
-
-    /**
-     * @addtogroup layout_pols
-     * @{
-     */
-
-    /// @cond
-    // Forward declarations.
     struct C_stride_layout_str;
     struct F_stride_layout_str;
-    /// @endcond
 
     /**
      * @brief Contiguous layout policy with C-order (row-major order) and possible string indices.
@@ -378,14 +358,14 @@ namespace enda
      */
     struct C_layout_str
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = rect_str<Rank, 0, C_stride_order<Rank>, layout_prop_e::contiguous>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = C_stride_layout_str;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = C_layout_str;
     };
 
@@ -395,14 +375,14 @@ namespace enda
      */
     struct F_layout_str
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = rect_str<Rank, 0, Fortran_stride_order<Rank>, layout_prop_e::contiguous>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = F_stride_layout_str;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = F_layout_str;
     };
 
@@ -412,14 +392,14 @@ namespace enda
      */
     struct C_stride_layout_str
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = rect_str<Rank, 0, C_stride_order<Rank>, layout_prop_e::none>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = C_stride_layout_str;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = C_layout_str;
     };
 
@@ -429,14 +409,14 @@ namespace enda
      */
     struct F_stride_layout_str
     {
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = rect_str<Rank, 0, Fortran_stride_order<Rank>, layout_prop_e::none>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = F_stride_layout_str;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = F_layout_str;
     };
 
@@ -451,14 +431,14 @@ namespace enda
     struct basic_layout_str
     {
         // FIXME C++20 : StrideOrder will be a std::array<int, Rank> WITH SAME rank
-        /// Multi-dimensional to flat index mapping.
+        // Multi-dimensional to flat index mapping.
         template<int Rank>
         using mapping = rect_str<Rank, StaticExtents, StrideOrder, LayoutProp>;
 
-        /// The same layout policy, but with no guarantee of contiguity.
+        // The same layout policy, but with no guarantee of contiguity.
         using with_lowest_guarantee_t = basic_layout_str<StaticExtents, StrideOrder, layout_prop_e::none>;
 
-        /// The same layout policy, but with guarantee of contiguity.
+        // The same layout policy, but with guarantee of contiguity.
         using contiguous_t = basic_layout_str<StaticExtents, StrideOrder, layout_prop_e::contiguous>;
     };
 
@@ -487,7 +467,5 @@ namespace enda
         };
 
     } // namespace detail
-
-    /** @} */
 
 } // namespace enda

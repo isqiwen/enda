@@ -1,7 +1,7 @@
 /**
  * @file Padding.hpp
  *
- * @brief Provides the generic class for views.
+ * @brief Provides a method to compute the minimal extra padding in the fastest changing dimension for 2D or 3D array.
  */
 
 #pragma once

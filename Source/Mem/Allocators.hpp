@@ -24,10 +24,6 @@
 #include "Mem/Memset.hpp"
 #include "Mem/SingletonPool.hpp"
 
-#ifndef NDEBUG
-    #include <iostream>
-#endif
-
 namespace enda::mem
 {
     enum class BlockScale : uint8_t
@@ -77,7 +73,7 @@ namespace enda::mem
         static void release() noexcept { return; }
 
         // alloc_size: Size in bytes of the memory to allocate.
-        static blk_t allocate(std::size_t alloc_size) noexcept { return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size, eDirect}; }
+        static blk_t allocate(std::size_t alloc_size) noexcept { return blk_t {(char*)malloc<address_space, k_cache_line>(alloc_size), alloc_size, eDirect}; }
 
         static blk_t allocate_zero(std::size_t alloc_size) noexcept
         {
@@ -86,7 +82,7 @@ namespace enda::mem
             return b;
         }
 
-        static void deallocate(const blk_t& b) noexcept { free<address_space>((void*)b.ptr); }
+        static void deallocate(const blk_t& b) noexcept { free<address_space, k_cache_line>((void*)b.ptr); }
     };
 
     constexpr std::size_t _64K_LG2  = 16;
@@ -200,7 +196,7 @@ namespace enda::mem
 
             if (raw_scale == eDirect)
             {
-                return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size, eDirect};
+                return blk_t {(char*)malloc<address_space, k_cache_line>(alloc_size), alloc_size, eDirect};
             }
 
             char* p = nullptr;
@@ -270,7 +266,7 @@ namespace enda::mem
                 }
             }
 
-            return blk_t {(char*)malloc<address_space>(alloc_size), alloc_size, eDirect};
+            return blk_t {(char*)malloc<address_space, k_cache_line>(alloc_size), alloc_size, eDirect};
         }
 
         static blk_t allocate_zero(std::size_t alloc_size) noexcept
@@ -330,7 +326,7 @@ namespace enda::mem
                     break;
                 }
                 case BlockScale::eDirect: {
-                    free<address_space>((void*)b.ptr);
+                    free<address_space, k_cache_line>((void*)b.ptr);
                     break;
                 }
                 default:

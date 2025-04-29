@@ -18,20 +18,20 @@ namespace enda
 #ifdef ENDA_HAVE_CUDA
     // TODO:
 
-    /// Constexpr variable that is true if the project is configured with GPU support.
+    // Constexpr variable that is true if the project is configured with GPU support.
     inline constexpr bool have_device = true;
 
-    /// Constexpr variable that is true if the project is configured with CUDA support.
+    // Constexpr variable that is true if the project is configured with CUDA support.
     inline constexpr bool have_cuda = true;
 #else
 
-    /// Trigger a compilation error every time the enda::device_error_check function is called.
+    // Trigger a compilation error every time the enda::device_error_check function is called.
     #define device_error_check(ARG1, ARG2) compile_error_no_gpu()
 
-    /// Constexpr variable that is true if the project is configured with GPU support.
+    // Constexpr variable that is true if the project is configured with GPU support.
     inline constexpr bool have_device = false;
 
-    /// Constexpr variable that is true if the project is configured with CUDA support.
+    // Constexpr variable that is true if the project is configured with CUDA support.
     inline constexpr bool have_cuda = false;
 
 #endif

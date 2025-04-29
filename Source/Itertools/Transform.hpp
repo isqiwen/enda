@@ -16,9 +16,7 @@
 
 namespace enda::itertools
 {
-
     /**
-     * @ingroup range_iterators
      * @brief Iterator for a itertools::transformed range.
      *
      * @details It stores an iterator of the original range and a callable object that is used to transform the
@@ -34,13 +32,13 @@ namespace enda::itertools
     template<typename Iter, typename F, typename Value = std::invoke_result_t<F, typename std::iterator_traits<Iter>::value_type>>
     struct transform_iter : iterator_facade<transform_iter<Iter, F>, Value>
     {
-        /// Iterator of the original range.
+        // Iterator of the original range.
         Iter it;
 
-        /// Callable doing the transformation.
+        // Callable doing the transformation.
         mutable std::optional<F> lambda;
 
-        /// Default constructor.
+        // Default constructor.
         transform_iter() = default;
 
         /**
@@ -51,16 +49,16 @@ namespace enda::itertools
          */
         transform_iter(Iter it, F lambda) : it(std::move(it)), lambda(std::move(lambda)) {}
 
-        /// Increment the iterator by incrementing the original iterator.
+        // Increment the iterator by incrementing the original iterator.
         void increment() { ++it; }
 
-        /// Default move constructor.
+        // Default move constructor.
         transform_iter(transform_iter&&) = default;
 
-        /// Default copy constructor.
+        // Default copy constructor.
         transform_iter(transform_iter const&) = default;
 
-        /// Default move assignment operator.
+        // Default move assignment operator.
         transform_iter& operator=(transform_iter&&) = default;
 
         /**
@@ -117,16 +115,16 @@ namespace enda::itertools
     template<typename R, typename F>
     struct transformed
     {
-        /// Original range.
+        // Original range.
         R rg;
 
-        /// Callable doing the transformation.
+        // Callable doing the transformation.
         F lambda;
 
-        /// Const iterator type of the transformed range.
+        // Const iterator type of the transformed range.
         using const_iterator = transform_iter<decltype(std::cbegin(rg)), F>;
 
-        /// Iterator type of the transformed range.
+        // Iterator type of the transformed range.
         using iterator = const_iterator;
 
         /**
@@ -135,7 +133,7 @@ namespace enda::itertools
          */
         [[nodiscard]] const_iterator cbegin() const noexcept { return {std::cbegin(rg), lambda}; }
 
-        /// The same as cbegin().
+        // The same as cbegin().
         [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
 
         /**
@@ -144,7 +142,7 @@ namespace enda::itertools
          */
         [[nodiscard]] auto cend() const noexcept { return make_sentinel(std::cend(rg)); }
 
-        /// The same as cend().
+        // The same as cend().
         [[nodiscard]] auto end() const noexcept { return cend(); }
     };
 

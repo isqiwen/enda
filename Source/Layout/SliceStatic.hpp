@@ -24,22 +24,12 @@
 
 namespace enda
 {
-    /// @cond
-    // Forward declarations.
     template<int Rank, uint64_t StaticExtents, uint64_t StrideOrder, layout_prop_e LayoutProp>
     class idx_map;
-    /// @endcond
-
 } // namespace enda
 
 namespace enda::slice_static
 {
-
-    /**
-     * @addtogroup layout_idx
-     * @{
-     */
-
     // Notations for this file
     //
     // N: rank of the original idx_map
@@ -352,7 +342,5 @@ namespace enda::slice_static
 
         return detail::slice_idx_map_impl(std::make_index_sequence<R - n_args_long> {}, std::make_index_sequence<R> {}, idxm, args...);
     }
-
-    /** @} */
 
 } // namespace enda::slice_static

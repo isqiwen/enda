@@ -16,9 +16,7 @@
 
 namespace enda::itertools
 {
-
     /**
-     * @ingroup range_iterators
      * @brief Iterator for a itertools::zipped range.
      *
      * @details It stores iterators of the original ranges in a tuple. Incrementing simply increments each iterator
@@ -31,10 +29,10 @@ namespace enda::itertools
     template<typename... Iters>
     struct zip_iter : iterator_facade<zip_iter<Iters...>, std::tuple<typename std::iterator_traits<Iters>::value_type...>>
     {
-        /// Tuple containing iterators of the original ranges.
+        // Tuple containing iterators of the original ranges.
         std::tuple<Iters...> its;
 
-        /// Default constructor.
+        // Default constructor.
         zip_iter() = default;
 
         /**
@@ -46,13 +44,13 @@ namespace enda::itertools
     private:
         // Helper function which increments all original iterators.
         template<size_t... Is>
-        [[gnu::always_inline]] void increment_all(std::index_sequence<Is...>)
+        FORCEINLINE void increment_all(std::index_sequence<Is...>)
         {
             ((void)(++std::get<Is>(its)), ...);
         }
 
     public:
-        /// Increment the iterator by incrementing all original iterators stored in the tuple.
+        // Increment the iterator by incrementing all original iterators stored in the tuple.
         void increment() { increment_all(std::index_sequence_for<Iters...> {}); }
 
         /**
@@ -108,16 +106,16 @@ namespace enda::itertools
     template<typename... Rs>
     struct zipped
     {
-        /// Tuple containing the original ranges.
+        // Tuple containing the original ranges.
         std::tuple<Rs...> tu;
 
-        /// Convenience typedef for an std::index_sequence.
+        // Convenience typedef for an std::index_sequence.
         using seq_t = std::index_sequence_for<Rs...>;
 
-        /// Iterator type of the zipped range.
+        // Iterator type of the zipped range.
         using iterator = zip_iter<decltype(std::begin(std::declval<Rs&>()))...>;
 
-        /// Const iterator type of the zipped range.
+        // Const iterator type of the zipped range.
         using const_iterator = zip_iter<decltype(std::cbegin(std::declval<Rs&>()))...>;
 
         /**
@@ -130,20 +128,20 @@ namespace enda::itertools
         zipped(Us&&... rgs) : tu {std::forward<Us>(rgs)...}
         {}
 
-        /// Default equal-to operator.
+        // Default equal-to operator.
         [[nodiscard]] bool operator==(zipped const&) const = default;
 
     private:
         // Helper function that applies a given callable to each range in the stored tuple and returns a new tuple with the results.
         template<typename F, size_t... Is>
-        [[gnu::always_inline]] auto tuple_map(F&& f, std::index_sequence<Is...>)
+        FORCEINLINE auto tuple_map(F&& f, std::index_sequence<Is...>)
         {
             return std::make_tuple(std::forward<F>(f)(std::get<Is>(tu))...);
         }
 
         // Const overload of tuple_map(F &&, std::index_sequence<Is...>).
         template<typename F, size_t... Is>
-        [[gnu::always_inline]] auto tuple_map(F&& f, std::index_sequence<Is...>) const
+        FORCEINLINE auto tuple_map(F&& f, std::index_sequence<Is...>) const
         {
             return std::make_tuple(std::forward<F>(f)(std::get<Is>(tu))...);
         }
@@ -158,13 +156,13 @@ namespace enda::itertools
             return tuple_map([](auto&& rg) { return std::begin(rg); }, seq_t {});
         }
 
-        /// Const version of begin().
+        // Const version of begin().
         [[nodiscard]] const_iterator cbegin() const noexcept
         {
             return tuple_map([](auto&& rg) { return std::cbegin(rg); }, seq_t {});
         }
 
-        /// Const overload of begin().
+        // Const overload of begin().
         [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
 
         /**
@@ -176,13 +174,13 @@ namespace enda::itertools
             return make_sentinel(tuple_map([](auto&& rg) { return std::end(rg); }, seq_t {}));
         }
 
-        /// Const version of end().
+        // Const version of end().
         [[nodiscard]] auto cend() const noexcept
         {
             return make_sentinel(tuple_map([](auto&& rg) { return std::cend(rg); }, seq_t {}));
         }
 
-        /// Const overload of end().
+        // Const overload of end().
         [[nodiscard]] auto end() const noexcept { return cend(); }
     };
 

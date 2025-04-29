@@ -1,8 +1,5 @@
 #pragma once
 
-#include <exception>
-#include <iostream>
-
 /**
  * @file Macros.hpp
  *
@@ -12,7 +9,8 @@
  * macros that are marked as __[public]__ should be consumed.
  */
 
-// NOLINTBEGIN Sometime macros are the only way to do things...
+#include <exception>
+#include <iostream>
 
 /**
  * @brief __[public]__ The major version of enda.
@@ -32,6 +30,27 @@
  * Increments when bug fixes are made in an API backward compatible manner.
  */
 #define ENDA_VERSION_PATCH 0
+
+/**
+ * @brief Detect the operating system
+ */
+#if defined(_WIN32)
+    #define ENDA_WINDOWS // Windows
+    #define ENDA_OS_NAME "windows"
+#elif defined(_WIN64)
+    #define ENDA_WINDOWS // Windows
+    #define ENDA_OS_NAME "windows"
+#elif defined(__CYGWIN__) && !defined(_WIN32)
+    #define ENDA_WINDOWS // Windows (Cygwin POSIX under Microsoft Window)
+    #define ENDA_OS_NAME "windows"
+#elif defined(__linux__)
+    #define ENDA_LINUX // Debian, Ubuntu, Gentoo, Fedora, openSUSE, RedHat, Centos and other
+    #define ENDA_UNIX
+    #define ENDA_OS_NAME "linux"
+#else
+    #define ENDA_UNKNOWN
+    #define ENDA_OS_NAME "unknown"
+#endif
 
 /**
  * @brief Use to conditionally decorate lambdas and ``operator()`` (alongside ``ENDA_STATIC_CONST``) with
@@ -132,7 +151,3 @@
             std::terminate(); \
         }
 #endif
-
-// Use stats allocator
-
-// #define ENDA_MEMORY_USAGE_STATS

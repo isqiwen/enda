@@ -15,9 +15,7 @@
 
 namespace enda::itertools
 {
-
     /**
-     * @ingroup adapted_ranges
      * @brief Represents a sliced range.
      *
      * @details See itertools::slice(R &&, std::ptrdiff_t, std::ptrdiff_t) for more details.
@@ -27,22 +25,22 @@ namespace enda::itertools
     template<typename R>
     struct sliced
     {
-        /// Original range.
+        // Original range.
         R rg;
 
-        /// Index at which the sliced range starts.
+        // Index at which the sliced range starts.
         std::ptrdiff_t start_idx;
 
-        /// Index at which the sliced range ends.
+        // Index at which the sliced range ends.
         std::ptrdiff_t end_idx;
 
-        /// Iterator type of the sliced range.
+        // Iterator type of the sliced range.
         using iterator = decltype(std::begin(rg));
 
-        /// Const iterator type of the sliced range.
+        // Const iterator type of the sliced range.
         using const_iterator = decltype(std::cbegin(rg));
 
-        /// Default equal-to operator.
+        // Default equal-to operator.
         [[nodiscard]] bool operator==(sliced const&) const = default;
 
         /**
@@ -61,10 +59,10 @@ namespace enda::itertools
          */
         [[nodiscard]] iterator begin() noexcept { return std::next(std::begin(rg), start_idx); }
 
-        /// Const version of begin().
+        // Const version of begin().
         [[nodiscard]] const_iterator cbegin() const noexcept { return std::next(std::cbegin(rg), start_idx); }
 
-        /// Const overload of begin().
+        // Const overload of begin().
         [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
 
         /**
@@ -73,10 +71,10 @@ namespace enda::itertools
          */
         [[nodiscard]] iterator end() noexcept { return std::next(begin(), size()); }
 
-        /// Const version of end().
+        // Const version of end().
         [[nodiscard]] const_iterator cend() const noexcept { return std::next(cbegin(), size()); }
 
-        /// Const overload of end().
+        // Const overload of end().
         [[nodiscard]] const_iterator end() const noexcept { return cend(); }
     };
 

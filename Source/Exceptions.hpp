@@ -26,7 +26,7 @@ namespace enda
         mutable std::string _what;
 
     public:
-        /// Default constructor.
+        // Default constructor.
         runtime_error() noexcept : std::exception() {}
 
         /**
@@ -35,7 +35,7 @@ namespace enda
          */
         runtime_error(runtime_error const& err) noexcept : acc(err.acc.str()), _what(err._what) {}
 
-        /// Default destructor.
+        // Default destructor.
         ~runtime_error() noexcept override = default;
 
         /**

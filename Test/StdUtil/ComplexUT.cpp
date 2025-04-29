@@ -1,6 +1,4 @@
-#include <gtest/gtest.h>
-
-#include "StdUtil/Complex.hpp"
+#include "../TestCommon.hpp"
 
 TEST(ComplexOperatorTest, Addition)
 {

@@ -1,9 +1,6 @@
-#include <Itertools/Zip.hpp>
-#include <gtest/gtest.h>
-#include <list>
-#include <string>
-#include <tuple>
-#include <vector>
+#include "../TestCommon.hpp"
+
+using namespace enda::itertools;
 
 //------------------------------------------------------------------------------
 // Test case for zip: verifies that zip stops at the shortest container.

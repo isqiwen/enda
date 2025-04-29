@@ -1,12 +1,4 @@
-#include <atomic>
-#include <chrono>
-#include <cstdint>
-#include <cstdlib>
-#include <gtest/gtest.h>
-#include <thread>
-#include <vector>
-
-#include "Mem/SingletonPool.hpp"
+#include "../TestCommon.hpp"
 
 using namespace enda::mem;
 

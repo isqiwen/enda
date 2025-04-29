@@ -1,5 +1,6 @@
 /**
- * @file
+ * @file BoundCheckWorker.hpp 
+ * 
  * @brief Provides a way to check the bounds when accessing elements/slices of an array or a view.
  */
 

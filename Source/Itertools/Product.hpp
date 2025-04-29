@@ -16,9 +16,7 @@
 
 namespace enda::itertools
 {
-
     /**
-     * @ingroup range_iterators
      * @brief Iterator for a itertools::multiplied (cartesian product) range.
      *
      * @details It stores three tuples of iterators of the original ranges:
@@ -40,19 +38,19 @@ namespace enda::itertools
     template<typename EndIters, typename... Iters>
     struct prod_iter : iterator_facade<prod_iter<EndIters, Iters...>, std::tuple<typename std::iterator_traits<Iters>::value_type...>>
     {
-        /// Tuple containing the begin iterators of the original ranges.
+        // Tuple containing the begin iterators of the original ranges.
         std::tuple<Iters...> its_begin;
 
-        /// Tuple containing the end iterators of the original ranges.
+        // Tuple containing the end iterators of the original ranges.
         EndIters its_end;
 
-        /// Tuple containing the current iterators of the original ranges.
+        // Tuple containing the current iterators of the original ranges.
         std::tuple<Iters...> its = its_begin;
 
-        /// Number of original ranges.
+        // Number of original ranges.
         static constexpr long Rank = sizeof...(Iters);
 
-        /// Default constructor.
+        // Default constructor.
         prod_iter() = default;
 
         /**
@@ -83,7 +81,7 @@ namespace enda::itertools
         }
 
     public:
-        /// Increment the iterator by incrementing the current iterators starting with the iterator of the last range.
+        // Increment the iterator by incrementing the current iterators starting with the iterator of the last range.
         void increment() { _increment<Rank - 1>(); }
 
         /**
@@ -112,7 +110,7 @@ namespace enda::itertools
     private:
         // Helper function to dereference all original iterators.
         template<size_t... Is>
-        [[gnu::always_inline]] [[nodiscard]] auto tuple_map_impl(std::index_sequence<Is...>) const
+        FORCEINLINE [[nodiscard]] auto tuple_map_impl(std::index_sequence<Is...>) const
         {
             return std::tuple<decltype(*std::get<Is>(its))...>(*std::get<Is>(its)...);
         }
@@ -136,13 +134,13 @@ namespace enda::itertools
     template<typename... Rs>
     struct multiplied
     {
-        /// Tuple containing the original ranges.
+        // Tuple containing the original ranges.
         std::tuple<Rs...> tu;
 
-        /// Iterator type of the product range.
+        // Iterator type of the product range.
         using iterator = prod_iter<std::tuple<decltype(std::end(std::declval<Rs&>()))...>, decltype(std::begin(std::declval<Rs&>()))...>;
 
-        /// Const iterator type the product range.
+        // Const iterator type the product range.
         using const_iterator = prod_iter<std::tuple<decltype(std::cend(std::declval<Rs&>()))...>, decltype(std::cbegin(std::declval<Rs&>()))...>;
 
         /**
@@ -155,20 +153,20 @@ namespace enda::itertools
         multiplied(Us&&... rgs) : tu {std::forward<Us>(rgs)...}
         {}
 
-        /// Default equal-to operator.
+        // Default equal-to operator.
         [[nodiscard]] bool operator==(multiplied const&) const = default;
 
     private:
         // Helper function to create a itertools::prod_iter representing the beginning of the product range.
         template<size_t... Is>
-        [[gnu::always_inline]] auto _begin(std::index_sequence<Is...>)
+        FORCEINLINE auto _begin(std::index_sequence<Is...>)
         {
             return iterator {std::make_tuple(std::begin(std::get<Is>(tu))...), std::make_tuple(std::end(std::get<Is>(tu))...)};
         }
 
         // Const version of _begin(std::index_sequence<Is...>).
         template<size_t... Is>
-        [[gnu::always_inline]] auto _cbegin(std::index_sequence<Is...>) const
+        FORCEINLINE auto _cbegin(std::index_sequence<Is...>) const
         {
             return const_iterator {std::make_tuple(std::cbegin(std::get<Is>(tu))...), std::make_tuple(std::cend(std::get<Is>(tu))...)};
         }
@@ -180,10 +178,10 @@ namespace enda::itertools
          */
         [[nodiscard]] iterator begin() noexcept { return _begin(std::index_sequence_for<Rs...> {}); }
 
-        /// Const version of begin().
+        // Const version of begin().
         [[nodiscard]] const_iterator cbegin() const noexcept { return _cbegin(std::index_sequence_for<Rs...> {}); }
 
-        /// Const overload of begin().
+        // Const overload of begin().
         [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
 
         /**
@@ -192,10 +190,10 @@ namespace enda::itertools
          */
         [[nodiscard]] auto end() noexcept { return make_sentinel(std::end(std::get<0>(tu))); }
 
-        /// Const version of end().
+        // Const version of end().
         [[nodiscard]] auto cend() const noexcept { return make_sentinel(std::cend(std::get<0>(tu))); }
 
-        /// Const overload of end().
+        // Const overload of end().
         [[nodiscard]] auto end() const noexcept { return cend(); }
     };
 
@@ -253,7 +251,7 @@ namespace enda::itertools
 
         // Helper function to create a product range from a container of ranges.
         template<typename C, size_t... Is>
-        [[gnu::always_inline]] [[nodiscard]] auto make_product_impl(C& cont, std::index_sequence<Is...>)
+        FORCEINLINE [[nodiscard]] auto make_product_impl(C& cont, std::index_sequence<Is...>)
         {
             return product(cont[Is]...);
         }
@@ -274,13 +272,11 @@ namespace enda::itertools
         return detail::make_product_impl(arr, std::make_index_sequence<N> {});
     }
 
-    /// Const overload of make_product(std::array<R, N> &).
+    // Const overload of make_product(std::array<R, N> &).
     template<typename R, size_t N>
     [[nodiscard]] auto make_product(std::array<R, N> const& arr)
     {
         return detail::make_product_impl(arr, std::make_index_sequence<N> {});
     }
-
-    /** @} */
 
 } // namespace enda::itertools

@@ -15,9 +15,7 @@
 
 namespace enda::itertools
 {
-
     /**
-     * @ingroup range_iterators
      * @brief Iterator for an itertools::enumerated range.
      *
      * @details It stores an iterator of the original range and an index. Incrementing advances the iterator
@@ -31,13 +29,13 @@ namespace enda::itertools
     template<typename Iter>
     struct enum_iter : iterator_facade<enum_iter<Iter>, std::pair<long, typename std::iterator_traits<Iter>::value_type>>
     {
-        /// Iterator of the original range.
+        // Iterator of the original range.
         Iter it;
 
-        /// Index for enumerating.
+        // Index for enumerating.
         long i = 0;
 
-        /// Default constructor sets the index to zero and default constructs the original iterator.
+        // Default constructor sets the index to zero and default constructs the original iterator.
         enum_iter() = default;
 
         /**
@@ -46,7 +44,7 @@ namespace enda::itertools
          */
         enum_iter(Iter it) : it(std::move(it)) {}
 
-        /// Increment the iterator by incrementing the original iterator and the index.
+        // Increment the iterator by incrementing the original iterator and the index.
         void increment()
         {
             ++it;
@@ -82,7 +80,6 @@ namespace enda::itertools
     };
 
     /**
-     * @ingroup adapted_ranges
      * @brief Represents an enumerated range.
      *
      * @details See itertools::enumerate(R &&) for more details.
@@ -92,16 +89,16 @@ namespace enda::itertools
     template<typename R>
     struct enumerated
     {
-        /// Original range.
+        // Original range.
         R rg;
 
-        /// Iterator type of the enumerated range.
+        // Iterator type of the enumerated range.
         using iterator = enum_iter<decltype(std::begin(rg))>;
 
-        /// Const iterator type of the enumerated range.
+        // Const iterator type of the enumerated range.
         using const_iterator = enum_iter<decltype(std::cbegin(rg))>;
 
-        /// Default equal-to operator.
+        // Default equal-to operator.
         [[nodiscard]] bool operator==(enumerated const&) const = default;
 
         /**
@@ -110,10 +107,10 @@ namespace enda::itertools
          */
         [[nodiscard]] iterator begin() noexcept { return std::begin(rg); }
 
-        /// Const version of begin().
+        // Const version of begin().
         [[nodiscard]] const_iterator cbegin() const noexcept { return std::cbegin(rg); }
 
-        /// Const overload of begin().
+        // Const overload of begin().
         [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
 
         /**
@@ -122,15 +119,14 @@ namespace enda::itertools
          */
         [[nodiscard]] auto end() noexcept { return make_sentinel(std::end(rg)); }
 
-        /// Const version of end().
+        // Const version of end().
         [[nodiscard]] auto cend() const noexcept { return make_sentinel(std::cend(rg)); }
 
-        /// Const overload of end().
+        // Const overload of end().
         [[nodiscard]] auto end() const noexcept { return cend(); }
     };
 
     /**
-     * @ingroup range_adapting_functions
      * @brief Lazy-enumerate a given range (similar to Python's enumerate).
      *
      * @details Each element in the original range is assigned an index, starting from zero. This function
@@ -166,4 +162,3 @@ namespace enda::itertools
     }
 
 } // namespace enda::itertools
-

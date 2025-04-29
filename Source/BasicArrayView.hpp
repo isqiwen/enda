@@ -71,30 +71,7 @@ namespace enda
      * handling the memory resources (see @ref mem_handles).
      *
      * In contrast to regular arrays (see enda::basic_array), views do not own the data they point to. They are a fast and
-     * efficient way to access and manipulate already existing data:
-     *
-     * @code{.cpp}
-     * // create a regular 3x3 array of ones
-     * auto arr = enda::ones<int>(3, 3);
-     * std::cout << arr << std::endl;
-     *
-     * // zero out the first column
-     * arr(enda::range::all, 0) = 0;
-     * std::cout << arr << std::endl;
-     * @endcode
-     *
-     * Output:
-     *
-     * @code{bash}
-     *
-     * [[1,1,1]
-     *  [1,1,1]
-     *  [1,1,1]]
-     *
-     * [[0,1,1]
-     *  [0,1,1]
-     *  [0,1,1]]
-     * @endcode
+     * efficient way to access and manipulate already existing data.
      *
      * Views are usually created by taking a slice of a regular enda::basic_array or another view. In the example above,
      * `arr(enda::range::all, 0)` creates a view of the first column of the regular array `arr`, which is then set to zero.
@@ -116,28 +93,28 @@ namespace enda
         static_assert((Algebra != 'V') or (Rank == 1), "Internal error in enda::basic_array_view: Algebra 'V' requires a rank 1 view");
 
     public:
-        /// Type of the values in the view (might be const).
+        // Type of the values in the view (might be const).
         using value_type = ValueType;
 
-        /// Type of the memory layout policy (see @ref layout_pols).
+        // Type of the memory layout policy (see @ref layout_pols).
         using layout_policy_t = LayoutPolicy;
 
-        /// Type of the memory layout (an enda::idx_map).
+        // Type of the memory layout (an enda::idx_map).
         using layout_t = typename LayoutPolicy::template mapping<Rank>;
 
-        /// Type of the accessor policy (see e.g. enda::default_accessor).
+        // Type of the accessor policy (see e.g. enda::default_accessor).
         using accessor_policy_t = AccessorPolicy;
 
-        /// Type of the owning policy (see @ref mem_pols).
+        // Type of the owning policy (see @ref mem_pols).
         using owning_policy_t = OwningPolicy;
 
-        /// Type of the memory handle (see @ref mem_handles).
+        // Type of the memory handle (see @ref mem_handles).
         using storage_t = typename OwningPolicy::template handle<ValueType>;
 
-        /// The associated regular (enda::basic_array) type.
+        // The associated regular (enda::basic_array) type.
         using regular_type = basic_array<std::remove_const_t<ValueType>, Rank, C_layout, Algebra, heap<mem::get_addr_space<storage_t>>>;
 
-        /// Number of dimensions of the view.
+        // Number of dimensions of the view.
         static constexpr int rank = Rank;
 
     private:
@@ -169,8 +146,15 @@ namespace enda
         static constexpr bool requires_runtime_check = not layout_property_compatible(L::template mapping<Rank>::layout_prop, layout_t::layout_prop);
 
     public:
-        // FIXME : TRIQS PORTING
-        // private constructor for the previous friend
+        // Default constructor constructs an empty view with a default constructed memory handle and layout.
+        basic_array_view() = default;
+
+        // Default move constructor moves the memory handle and layout.
+        basic_array_view(basic_array_view&&) = default;
+
+        // Default copy constructor copies the memory handle and layout.
+        basic_array_view(basic_array_view const&) = default;
+
         /**
          * @brief Construct a view from a given layout and memory handle.
          *
@@ -180,23 +164,6 @@ namespace enda
          * @param st Memory handle of the view.
          */
         basic_array_view(layout_t const& idxm, storage_t st) : lay(idxm), sto(std::move(st)) {}
-
-    public:
-        // backward : FIXME : temporary to be removed
-        /// @deprecated Convert the current view to a view with an 'A' (array) algebra.
-        [[deprecated]] auto as_array_view() { return basic_array_view<ValueType, Rank, LayoutPolicy, 'A', AccessorPolicy, OwningPolicy> {*this}; };
-
-        /// @deprecated Convert the current view to a view with an 'A' (array) algebra.
-        [[deprecated]] auto as_array_view() const { return basic_array_view<const ValueType, Rank, LayoutPolicy, 'A', AccessorPolicy, OwningPolicy> {*this}; };
-
-        /// Default constructor constructs an empty view with a default constructed memory handle and layout.
-        basic_array_view() = default;
-
-        /// Default move constructor moves the memory handle and layout.
-        basic_array_view(basic_array_view&&) = default;
-
-        /// Default copy constructor copies the memory handle and layout.
-        basic_array_view(basic_array_view const&) = default;
 
         /**
          * @brief Generic constructor from any enda::MemoryArray type.

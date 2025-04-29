@@ -1,5 +1,6 @@
 /**
- * @file
+ * @file ForEach.hpp
+ *
  * @brief Provides `for_each` functions for multi-dimensional arrays/views.
  */
 
@@ -15,14 +16,8 @@
 
 namespace enda
 {
-    /**
-     * @addtogroup layout_utils
-     * @{
-     */
-
     namespace detail
     {
-
         // Get the i-th slowest moving dimension from a given encoded stride order.
         template<int R>
         constexpr int index_from_stride_order(uint64_t stride_order, int i)
@@ -126,7 +121,5 @@ namespace enda
         auto idxs = enda::stdutil::make_initialized_array<R>(0l);
         detail::for_each_static_impl<0, 0, 0>(shape, idxs, f);
     }
-
-    /** @} */
 
 } // namespace enda

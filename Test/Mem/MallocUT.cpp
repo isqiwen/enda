@@ -1,6 +1,4 @@
-#include <gtest/gtest.h>
-
-#include "Mem/Malloc.hpp"
+#include "../TestCommon.hpp"
 
 using namespace enda::mem;
 

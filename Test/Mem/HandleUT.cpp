@@ -1,9 +1,4 @@
-#include <cstdlib>
-#include <gtest/gtest.h>
-#include <utility>
-#include <vector>
-
-#include "Mem/Handle.hpp"
+#include "../TestCommon.hpp"
 
 using namespace enda::mem;
 

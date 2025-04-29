@@ -1,87 +1,29 @@
-/**
- * @file ImplBasicArrayViewCommon.hpp
- *
- * @brief Get the memory layout of the view/array.
- *
- * @return enda::idx_map specifying the layout of the view/array.
- */
 [[nodiscard]] constexpr auto const& indexmap() const noexcept { return lay; }
 
-/**
- * @brief Get the data storage of the view/array.
- * @return A const reference to the memory handle of the view/array.
- */
 [[nodiscard]] storage_t const& storage() const& noexcept { return sto; }
 
-/**
- * @brief Get the data storage of the view/array.
- * @return A reference to the memory handle of the view/array.
- */
 [[nodiscard]] storage_t& storage() & noexcept { return sto; }
 
-/**
- * @brief Get the data storage of the view/array.
- * @return A copy of the memory handle of the view/array.
- */
 [[nodiscard]] storage_t storage() && noexcept { return std::move(sto); }
 
-/**
- * @brief Get the stride order of the memory layout of the view/array (see enda::idx_map for more details on how we
- * define stride orders).
- *
- * @return `std::array<int, Rank>` object specifying the stride order.
- */
 [[nodiscard]] constexpr auto stride_order() const noexcept { return lay.stride_order; }
 
-/**
- * @brief Get a pointer to the actual data (in general this is not the beginning of the memory block for a view).
- * @return Const pointer to the first element of the view/array.
- */
 [[nodiscard]] ValueType const* data() const noexcept { return sto.data(); }
 
-/**
- * @brief Get a pointer to the actual data (in general this is not the beginning of thr memory block for a view).
- * @return Pointer to the first element of the view/array.
- */
 [[nodiscard]] ValueType* data() noexcept { return sto.data(); }
 
-/**
- * @brief Get the shape of the view/array.
- * @return `std::array<long, Rank>` object specifying the shape of the view/array.
- */
 [[nodiscard]] auto const& shape() const noexcept { return lay.lengths(); }
 
-/**
- * @brief Get the strides of the view/array (see enda::idx_map for more details on how we define strides).
- * @return `std::array<long, Rank>` object specifying the strides of the view/array.
- */
 [[nodiscard]] auto const& strides() const noexcept { return lay.strides(); }
 
-/**
- * @brief Get the total size of the view/array.
- * @return Number of elements contained in the view/array.
- */
 [[nodiscard]] long size() const noexcept { return lay.size(); }
 
-/**
- * @brief Is the memory layout of the view/array contiguous?
- * @return True if the enda::idx_map is contiguous, false otherwise.
- */
 [[nodiscard]] long is_contiguous() const noexcept { return lay.is_contiguous(); }
 
-/**
- * @brief Is the view/array empty?
- * @return True if the view/array does not contain any elements.
- */
 [[nodiscard]] bool empty() const { return sto.is_null(); }
 
-/// @deprecated Use empty() instead.
 [[nodiscard]] bool is_empty() const noexcept { return sto.is_null(); }
 
-/**
- * @brief Get the extent of the i<sup>th</sup> dimension.
- * @return Number of elements along the i<sup>th</sup> dimension.
- */
 [[nodiscard]] long extent(int i) const noexcept
 {
 #ifdef ENDA_ENFORCE_BOUNDCHECK
@@ -94,36 +36,14 @@
     return lay.lengths()[i];
 }
 
-/// @deprecated Use `extent(i)` or `shape()[i]` instead.
 [[nodiscard]] long shape(int i) const noexcept { return extent(i); }
 
-/**
- * @brief Get a range that generates all valid index tuples.
- * @return An `itertools::multiplied` range that can be used to iterate over all valid index tuples.
- */
 [[nodiscard]] auto indices() const noexcept { return itertools::product_range(shape()); }
 
-/**
- * @brief Is the stride order of the view/array in C-order?
- * @return True if the stride order of the enda::idx_map is C-order, false otherwise.
- */
 static constexpr bool is_stride_order_C() noexcept { return layout_t::is_stride_order_C(); }
 
-/**
- * @brief Is the stride order of the view/array in Fortran-order?
- * @return True if the stride order of the enda::idx_map is Fortran-order, false otherwise.
- */
 static constexpr bool is_stride_order_Fortran() noexcept { return layout_t::is_stride_order_Fortran(); }
 
-/**
- * @brief Access the element of the view/array at the given enda::_linear_index_t.
- *
- * @details The linear index specifies the position of the element in the view/array and not the position of the
- * element w.r.t. to the data pointer (i.e. any possible strides should not be taken into account).
- *
- * @param idx enda::_linear_index_t object.
- * @return Const reference to the element at the given linear index.
- */
 decltype(auto) operator()(_linear_index_t idx) const noexcept
 {
     if constexpr (layout_t::layout_prop == layout_prop_e::strided_1d)
@@ -134,7 +54,6 @@ decltype(auto) operator()(_linear_index_t idx) const noexcept
         static_assert(always_false<layout_t>, "Internal error in array/view: Calling this type with a _linear_index_t is not allowed");
 }
 
-/// Non-const overload of @ref enda::basic_array_view::operator()(_linear_index_t) const.
 decltype(auto) operator()(_linear_index_t idx) noexcept
 {
     if constexpr (layout_t::layout_prop == layout_prop_e::strided_1d)
@@ -146,7 +65,6 @@ decltype(auto) operator()(_linear_index_t idx) noexcept
 }
 
 private:
-// Constexpr variable that is true if bounds checking is disabled.
 #ifdef ENDA_ENFORCE_BOUNDCHECK
 static constexpr bool has_no_boundcheck = false;
 #else
@@ -154,35 +72,12 @@ static constexpr bool has_no_boundcheck = true;
 #endif
 
 public:
-/**
- * @brief Implementation of the function call operator.
- *
- * @details This function is an implementation detail an should be private. Since the Green's function library in
- * TRIQS uses this function, it is kept public (for now).
- *
- * @tparam ResultAlgebra Algebra of the resulting view/array.
- * @tparam SelfIsRvalue True if the view/array is an rvalue.
- * @tparam Self Type of the calling view/array.
- * @tparam T Types of the arguments.
- *
- * @param self Calling view.
- * @param idxs Multi-dimensional index consisting of `long`, `enda::range`, `enda::range::all_t`, enda::ellipsis or lazy
- * arguments.
- * @return Result of the function call depending on the given arguments and type of the view/array.
- */
 template<char ResultAlgebra, bool SelfIsRvalue, typename Self, typename... Ts>
 FORCEINLINE static decltype(auto) call(Self&& self, Ts const&... idxs) noexcept(has_no_boundcheck)
 {
     // resulting value type
     using r_v_t = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, ValueType const, ValueType>;
 
-    // behavior depends on the given arguments
-    // TODO: lazy
-    // if constexpr (clef::is_any_lazy<Ts...>)
-    // {
-    //     // if there are lazy arguments, e.g. as in A(i_) << i_, a lazy expression is returned
-    //     return clef::make_expr_call(std::forward<Self>(self), idxs...);
-    // }
     if constexpr (sizeof...(Ts) == 0)
     {
         // if no arguments are given, a full view is returned
@@ -227,27 +122,6 @@ FORCEINLINE static decltype(auto) call(Self&& self, Ts const&... idxs) noexcept(
 }
 
 public:
-/**
- * @brief Function call operator to access the view/array.
- *
- * @details Depending on the type of the calling object and the given arguments, this function call does the following:
- * - If any of the arguments is lazy, an enda::clef::expr with the enda::clef::tags::function tag is returned.
- * - If no arguments are given, a full view of the calling object is returned:
- *   - If the calling object itself or its value type is const, a view with a const value type is returned.
- *   - Otherwise, a view with a non-const value type is returned.
- * - If the number of arguments is equal to the rank of the calling object and all arguments are convertible to `long`,
- * a single element is accessed:
- *   - If the calling object is a view or an lvalue, a (const) reference to the element is returned.
- *   - Otherwise, a copy of the element is returned.
- * - Otherwise a slice of the calling object is returned with the same value type and accessor and owning policies as
- * the calling object. The algebra of the slice is the same as well, except if a 1-dimensional slice of a matrix is
- * taken. In this case, the algebra is changed to 'V'.
- *
- * @tparam Ts Types of the function arguments.
- * @param idxs Multi-dimensional index consisting of `long`, `enda::range`, `enda::range::all_t`, enda::ellipsis or lazy
- * arguments.
- * @return Result of the function call depending on the given arguments and type of the view/array.
- */
 template<typename... Ts>
 FORCEINLINE decltype(auto) operator()(Ts const&... idxs) const& noexcept(has_no_boundcheck)
 {
@@ -256,7 +130,6 @@ FORCEINLINE decltype(auto) operator()(Ts const&... idxs) const& noexcept(has_no_
     return call<Algebra, false>(*this, idxs...);
 }
 
-/// Non-const overload of `enda::basic_array_view::operator()(Ts const &...) const &`.
 template<typename... Ts>
 FORCEINLINE decltype(auto) operator()(Ts const&... idxs) & noexcept(has_no_boundcheck)
 {
@@ -265,7 +138,6 @@ FORCEINLINE decltype(auto) operator()(Ts const&... idxs) & noexcept(has_no_bound
     return call<Algebra, false>(*this, idxs...);
 }
 
-/// Rvalue overload of `enda::basic_array_view::operator()(Ts const &...) const &`.
 template<typename... Ts>
 FORCEINLINE decltype(auto) operator()(Ts const&... idxs) && noexcept(has_no_boundcheck)
 {
@@ -274,23 +146,6 @@ FORCEINLINE decltype(auto) operator()(Ts const&... idxs) && noexcept(has_no_boun
     return call<Algebra, true>(*this, idxs...);
 }
 
-/**
- * @brief Subscript operator to access the 1-dimensional view/array.
- *
- * @details Depending on the type of the calling object and the given argument, this subscript operation does the
- * following:
- * - If the argument is lazy, an enda::clef::expr with the enda::clef::tags::function tag is returned.
- * - If the argument is convertible to `long`, a single element is accessed:
- *   - If the calling object is a view or an lvalue, a (const) reference to the element is returned.
- *   - Otherwise, a copy of the element is returned.
- * - Otherwise a slice of the calling object is returned with the same value type, algebra and accessor and owning
- * policies as the calling object.
- *
- * @tparam T Type of the argument.
- * @param idx 1-dimensional index that is either a `long`, `enda::range`, `enda::range::all_t`, enda::ellipsis or a lazy
- * argument.
- * @return Result of the subscript operation depending on the given argument and type of the view/array.
- */
 template<typename T>
 decltype(auto) operator[](T const& idx) const& noexcept(has_no_boundcheck)
 {
@@ -298,7 +153,6 @@ decltype(auto) operator[](T const& idx) const& noexcept(has_no_boundcheck)
     return call<Algebra, false>(*this, idx);
 }
 
-/// Non-const overload of `enda::basic_array_view::operator[](T const &) const &`.
 template<typename T>
 decltype(auto) operator[](T const& x) & noexcept(has_no_boundcheck)
 {
@@ -306,7 +160,6 @@ decltype(auto) operator[](T const& x) & noexcept(has_no_boundcheck)
     return call<Algebra, false>(*this, x);
 }
 
-/// Rvalue overload of `enda::basic_array_view::operator[](T const &) const &`.
 template<typename T>
 decltype(auto) operator[](T const& x) && noexcept(has_no_boundcheck)
 {
@@ -314,17 +167,13 @@ decltype(auto) operator[](T const& x) && noexcept(has_no_boundcheck)
     return call<Algebra, true>(*this, x);
 }
 
-/// Rank of the enda::array_iterator for the view/array.
 static constexpr int iterator_rank = (has_strided_1d(layout_t::layout_prop) ? 1 : Rank);
 
-/// Const iterator type of the view/array.
 using const_iterator = array_iterator<iterator_rank, ValueType const, typename AccessorPolicy::template accessor<ValueType>::pointer>;
 
-/// Iterator type of the view/array.
 using iterator = array_iterator<iterator_rank, ValueType, typename AccessorPolicy::template accessor<ValueType>::pointer>;
 
 private:
-// Make an iterator for the view/array depending on its type.
 template<typename Iterator>
 [[nodiscard]] auto make_iterator(bool at_end) const noexcept
 {
@@ -353,36 +202,18 @@ template<typename Iterator>
 }
 
 public:
-/// Get a const iterator to the beginning of the view/array.
 [[nodiscard]] const_iterator begin() const noexcept { return make_iterator<const_iterator>(false); }
 
-/// Get a const iterator to the beginning of the view/array.
 [[nodiscard]] const_iterator cbegin() const noexcept { return make_iterator<const_iterator>(false); }
 
-/// Get an iterator to the beginning of the view/array.
 iterator begin() noexcept { return make_iterator<iterator>(false); }
 
-/// Get a const iterator to the end of the view/array.
 [[nodiscard]] const_iterator end() const noexcept { return make_iterator<const_iterator>(true); }
 
-/// Get a const iterator to the end of the view/array.
 [[nodiscard]] const_iterator cend() const noexcept { return make_iterator<const_iterator>(true); }
 
-/// Get an iterator to the end of the view/array.
 iterator end() noexcept { return make_iterator<iterator>(true); }
 
-/**
- * @brief Addition assignment operator.
- *
- * @details It first performs the (lazy) addition with the right hand side operand and then assigns the result to the
- * left hand side view/array.
- *
- * See enda::operator+(L &&, R &&) and enda::operator+(A &&, S &&) for more details.
- *
- * @tparam RHS enda::Scalar or enda::Array type.
- * @param rhs Right hand side operand of the addition assignment operation.
- * @return Reference to this object.
- */
 template<typename RHS>
 auto& operator+=(RHS const& rhs) noexcept
 {
@@ -390,18 +221,6 @@ auto& operator+=(RHS const& rhs) noexcept
     return operator=(*this + rhs);
 }
 
-/**
- * @brief Subtraction assignment operator.
- *
- * @details It first performs the (lazy) subtraction with the right hand side operand and then assigns the result to
- * the left hand side view/array.
- *
- * See enda::operator-(L &&, R &&) and enda::operator-(A &&, S &&) for more details.
- *
- * @tparam RHS enda::Scalar or enda::Array type.
- * @param rhs Right hand side operand of the subtraction assignment operation.
- * @return Reference to this object.
- */
 template<typename RHS>
 auto& operator-=(RHS const& rhs) noexcept
 {
@@ -409,18 +228,6 @@ auto& operator-=(RHS const& rhs) noexcept
     return operator=(*this - rhs);
 }
 
-/**
- * @brief Multiplication assignment operator.
- *
- * @details It first performs the (lazy) multiplication with the right hand side operand and then assigns the result
- * to the left hand side view/array.
- *
- * See enda::operator*(L &&, R &&) and enda::operator*(A &&, S &&) for more details.
- *
- * @tparam RHS enda::Scalar or enda::Array type.
- * @param rhs Right hand side operand of the multiplication assignment operation.
- * @return Reference to this object.
- */
 template<typename RHS>
 auto& operator*=(RHS const& rhs) noexcept
 {
@@ -428,18 +235,6 @@ auto& operator*=(RHS const& rhs) noexcept
     return operator=((*this) * rhs);
 }
 
-/**
- * @brief Division assignment operator.
- *
- * @details It first performs the (lazy) division with the right hand side operand and then assigns the result to the
- * left hand side view/array.
- *
- * See enda::operator/(L &&, R &&) and enda::operator/(A &&, S &&) for more details.
- *
- * @tparam RHS enda::Scalar or enda::Array type.
- * @param rhs Right hand side operand of the division assignment operation.
- * @return Reference to this object.
- */
 template<typename RHS>
 auto& operator/=(RHS const& rhs) noexcept
 {
@@ -447,14 +242,6 @@ auto& operator/=(RHS const& rhs) noexcept
     return operator=(*this / rhs);
 }
 
-/**
- * @brief Assignment operator makes a deep copy of a general contiguous range and assigns it to the 1-dimensional
- * view/array.
- *
- * @tparam R Range type.
- * @param rhs Right hand side range object.
- * @return Reference to this object.
- */
 template<std::ranges::contiguous_range R>
 auto& operator=(R const& rhs) noexcept requires(Rank == 1 and not MemoryArray<R>)
 {
@@ -463,14 +250,13 @@ auto& operator=(R const& rhs) noexcept requires(Rank == 1 and not MemoryArray<R>
 }
 
 private:
-// Implementation of the assignment from an n-dimensional array type.
 template<typename RHS>
 void assign_from_ndarray(RHS const& rhs)
-{ // FIXME noexcept {
+{
 #ifdef ENDA_ENFORCE_BOUNDCHECK
     if (this->shape() != rhs.shape())
         ENDA_RUNTIME_ERROR << "Error in assign_from_ndarray: Size mismatch:"
-                          << "\n LHS.shape() = " << this->shape() << "\n RHS.shape() = " << rhs.shape();
+                           << "\n LHS.shape() = " << this->shape() << "\n RHS.shape() = " << rhs.shape();
 #endif
     // compile-time check if assignment is possible
     static_assert(std::is_assignable_v<value_type&, get_value_t<RHS>>, "Error in assign_from_ndarray: Incompatible value types");
@@ -542,7 +328,6 @@ void assign_from_ndarray(RHS const& rhs)
     enda::for_each(shape(), [this, &rhs](auto const&... args) { (*this)(args...) = rhs(args...); });
 }
 
-// Implementation to fill a view/array with a constant scalar value.
 template<typename Scalar>
 void fill_with_scalar(Scalar const& scalar) noexcept
 {
@@ -572,7 +357,6 @@ void fill_with_scalar(Scalar const& scalar) noexcept
     }
 }
 
-// Implementation of the assignment from a scalar value.
 template<typename Scalar>
 void assign_from_scalar(Scalar const& scalar) noexcept
 {

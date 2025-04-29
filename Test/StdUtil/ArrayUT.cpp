@@ -1,6 +1,4 @@
-#include <gtest/gtest.h>
-
-#include "StdUtil/Array.hpp"
+#include "../TestCommon.hpp"
 
 using namespace enda::stdutil;
 

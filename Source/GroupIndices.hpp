@@ -20,7 +20,6 @@
 
 namespace enda
 {
-
     namespace detail
     {
 
@@ -72,7 +71,7 @@ namespace enda
                 bool idx_are_consecutive_in_memory = (max - min + 1 == grp.size());
                 if (!idx_are_consecutive_in_memory)
                     return min;
-                    //throw std::runtime_error("Error in enda::detail::stride_order_of_grouped_idx_map: Indices are not consecutive in memory");
+                // throw std::runtime_error("Error in enda::detail::stride_order_of_grouped_idx_map: Indices are not consecutive in memory");
                 return min;
             };
 
@@ -99,28 +98,15 @@ namespace enda
 
     } // namespace detail
 
-    /**
-     * @addtogroup layout_utils
-     * @{
-     */
-
-    /**
-     * @brief A group of indices.
-     * @tparam Is Indices.
-     */
     template<int... Is>
     struct idx_group_t
     {
-        /// std::array containing the indices.
+        // std::array containing the indices.
         static constexpr std::array<int, sizeof...(Is)> as_std_array {Is...};
     };
 
-    /**
-     * @brief Variable template for an enda::idx_group_t.
-     * @tparam Is Indices.
-     */
     template<int... Is>
-    inline idx_group_t<Is...> idx_group = {}; // NOLINT (global variable template is what we want here)
+    inline idx_group_t<Is...> idx_group = {};
 
     /**
      * @brief Given an enda::idx_map and a partition of its indices, return a new enda::idx_map with the grouped indices.
@@ -182,6 +168,4 @@ namespace enda
         return idx_map<new_rank, 0, new_stride_order, layout_prop_e::contiguous> {new_extents, new_strides};
     }
 
-    /** @} */
-
-} // namespace nda
+} // namespace enda

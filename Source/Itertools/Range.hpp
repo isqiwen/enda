@@ -17,12 +17,6 @@
 
 namespace enda::itertools
 {
-
-    /**
-     * @addtogroup integer_range
-     * @{
-     */
-
     /**
      * @brief A lazy range of integers that mimics a Python range.
      *
@@ -82,10 +76,10 @@ namespace enda::itertools
         struct all_t
         {};
 
-        /// See range::all_t.
+        // See range::all_t.
         static inline constexpr all_t all = {};
 
-        /// Integer type for backward compatibility.
+        // Integer type for backward compatibility.
         using index_t = long;
 
         /**
@@ -123,19 +117,19 @@ namespace enda::itertools
          */
         explicit range(long last) : range(0, last, 1) {}
 
-        /// Default equal-to operator.
+        // Default equal-to operator.
         [[nodiscard]] bool operator==(range const&) const = default;
 
-        /// Get first value of the range.
+        // Get first value of the range.
         [[nodiscard]] long first() const { return first_; }
 
-        /// Get last value of the range (excluded).
+        // Get last value of the range (excluded).
         [[nodiscard]] long last() const { return last_; }
 
-        /// Get step size between two elements of the range.
+        // Get step size between two elements of the range.
         [[nodiscard]] long step() const { return step_; }
 
-        /// Get number of elements in the range.
+        // Get number of elements in the range.
         [[nodiscard]] long size() const { return std::max(0l, (last_ + step_ - (step_ > 0 ? 1 : -1) - first_) / step_); }
 
         /**
@@ -162,31 +156,31 @@ namespace enda::itertools
             return os;
         }
 
-        /// Const iterator type for itertools::range.
+        // Const iterator type for itertools::range.
         struct const_iterator
         {
-            /// Current value.
+            // Current value.
             long pos;
 
-            /// Last value of the range (excluded).
+            // Last value of the range (excluded).
             long last;
 
-            /// Step size.
+            // Step size.
             long step;
 
-            /// Value type.
+            // Value type.
             using value_type = long;
 
-            /// Iterator category.
+            // Iterator category.
             using iterator_category = std::forward_iterator_tag;
 
-            /// Pointer type.
+            // Pointer type.
             using pointer = value_type*;
 
-            /// Difference type.
+            // Difference type.
             using difference_type = std::ptrdiff_t;
 
-            /// Reference type.
+            // Reference type.
             using reference = value_type const&;
 
             /**
@@ -252,7 +246,7 @@ namespace enda::itertools
          */
         [[nodiscard]] const_iterator cbegin() const noexcept { return {first_, last_, step_}; }
 
-        /// The same as cbegin().
+        // The same as cbegin().
         [[nodiscard]] const_iterator begin() const noexcept { return {first_, last_, step_}; }
 
         /**
@@ -261,7 +255,7 @@ namespace enda::itertools
          */
         [[nodiscard]] const_iterator cend() const noexcept { return {last_, last_, step_}; }
 
-        /// The same as cend().
+        // The same as cend().
         [[nodiscard]] const_iterator end() const noexcept { return {last_, last_, step_}; }
     };
 
@@ -303,7 +297,7 @@ namespace enda::itertools
 
         // Helper function to create a product range of integer ranges from a tuple or an array.
         template<typename T, size_t... Is>
-        [[gnu::always_inline]] auto product_range_impl(T const& idxs, std::index_sequence<Is...>)
+        FORCEINLINE auto product_range_impl(T const& idxs, std::index_sequence<Is...>)
         {
             return product_range(std::get<Is>(idxs)...);
         }
@@ -404,7 +398,5 @@ namespace enda::itertools
         for (; i < last; i += step)
             std::forward<F>(f)(i);
     }
-
-    /** @} */
 
 } // namespace enda::itertools

@@ -1,3 +1,9 @@
+/**
+ * @file Singleton.hpp
+ *
+ * @brief A base class template implementing the singleton pattern to provide a single, globally accessible instance of type T.
+ */
+
 #pragma once
 
 #include <type_traits>

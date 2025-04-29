@@ -1,10 +1,4 @@
-#include <chrono>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <thread>
-#include <vector>
-
-#include "Mem/Allocators.hpp"
+#include "../TestCommon.hpp"
 
 using namespace enda::mem;
 

@@ -6,6 +6,18 @@
 
 #pragma once
 
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(ENDA_NO_WINDOWS_H)
+    #define WIN32_LEAN_AND_MEAN
+    #include <Windows.h>
+#endif
+
+// Remove a few macros
+#undef min
+#undef max
+
+// Debug
+// #define ENDA_DEBUG
+
 #ifdef ENDA_DEBUG
     #define ENDA_ENFORCE_BOUNDCHECK
 #endif
@@ -13,7 +25,6 @@
 #include "Accessors.hpp"
 #include "Algorithms.hpp"
 #include "Arithmetic.hpp"
-#include "ArrayAdapter.hpp"
 #include "BasicArray.hpp"
 #include "BasicArrayView.hpp"
 #include "BasicFunctions.hpp"

@@ -14,12 +14,6 @@
 
 namespace enda::itertools
 {
-
-    /**
-     * @addtogroup utilities
-     * @{
-     */
-
     /**
      * @brief Advance an iterator by a given number of steps, up to a specified sentinel.
      *
@@ -144,7 +138,5 @@ namespace enda::itertools
         else
             return {first + n_large_nodes + rank * chunk_size, first + n_large_nodes + (rank + 1) * chunk_size};
     }
-
-    /** @} */
 
 } // namespace enda::itertools

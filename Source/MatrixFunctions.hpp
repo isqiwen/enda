@@ -23,20 +23,6 @@
 
 namespace enda
 {
-
-    /**
-     * @addtogroup av_factories
-     * @{
-     */
-
-    /**
-     * @brief Create an identity enda::matrix with ones on the diagonal.
-     *
-     * @tparam S enda::Scalar value type of the matrix.
-     * @tparam Int Integral type.
-     * @param dim Dimension of the square matrix.
-     * @return Identity enda::matrix of size `dim x dim`.
-     */
     template<Scalar S, std::integral Int = long>
     auto eye(Int dim)
     {
@@ -45,14 +31,6 @@ namespace enda
         return r;
     }
 
-    /**
-     * @ingroup av_math
-     * @brief Get the trace of a 2-dimensional square array/view.
-     *
-     * @tparam M enda::ArrayOfRank<2> type.
-     * @param m 2-dimensional array/view.
-     * @return Sum of the diagonal elements of the array/view.
-     */
     template<ArrayOfRank<2> M>
     auto trace(M const& m)
     {
@@ -65,17 +43,6 @@ namespace enda
         return r;
     }
 
-    /**
-     * @ingroup av_math
-     * @brief Get the conjugate transpose of 2-dimensional array/view.
-     *
-     * @details It first calls enda::transpose and then the lazy enda::conj function in case the array/view is complex
-     * valued.
-     *
-     * @tparam M enda::ArrayOfRank<2> type.
-     * @param m 2-dimensional array/view.
-     * @return (Lazy) Conjugate transpose of the array/view.
-     */
     template<ArrayOfRank<2> M>
     ArrayOfRank<2> auto dagger(M const& m)
     {
@@ -85,13 +52,6 @@ namespace enda
             return transpose(m);
     }
 
-    /**
-     * @brief Get a view of the diagonal of a 2-dimensional array/view.
-     *
-     * @tparam M enda::MemoryArrayOfRank<2> type.
-     * @param m 2-dimensional array/view.
-     * @return A view with the 'V' algebra of the diagonal of the array/view.
-     */
     template<MemoryArrayOfRank<2> M>
     ArrayOfRank<1> auto diagonal(M& m)
     {
@@ -101,13 +61,6 @@ namespace enda
         return vector_view_t {C_stride_layout::mapping<1> {{dim}, {stride}}, m.data()};
     }
 
-    /**
-     * @brief Get a new enda::matrix with the given values on the diagonal.
-     *
-     * @tparam V enda::ArrayOfRank<1> or `std::ranges::contiguous_range` type.
-     * @param v 1-dimensional array/view/container containing the diagonal values.
-     * @return enda::matrix with the given values on the diagonal.
-     */
     template<typename V>
     requires(std::ranges::contiguous_range<V> or ArrayOfRank<V, 1>) ArrayOfRank<2> auto diag(V const& v)
     {
@@ -123,20 +76,6 @@ namespace enda
         }
     }
 
-    /**
-     * @brief Stack two 2-dimensional arrays/views vertically.
-     *
-     * @details This is a more restricted implementation then enda::concatenate. It is only for 2D arrays/views.
-     *
-     * Given a an array A of size `n x q` and an array B of size `p x q`, the function returns a new array C of size
-     * `(n + p) x q` such that `C(range(0, n), range::all) == A` and `C(range(n, n + p), range::all) == B` is true.
-     *
-     * @tparam A enda::ArrayOfRank<2> type.
-     * @tparam B enda::ArrayOfRank<2> type.
-     * @param a 2-dimensional array/view.
-     * @param b 2-dimensional array/view.
-     * @return A new 2-dimensional array/view with the two arrays stacked vertically.
-     */
     template<ArrayOfRank<2> A, ArrayOfRank<2> B>
     requires(std::same_as<get_value_t<A>, get_value_t<B>>) // NB the get_value_t gets rid of const if any
         matrix<get_value_t<A>> vstack(A const& a, B const& b)
@@ -153,6 +92,4 @@ namespace enda
         return res;
     }
 
-    /** @} */
-
-} // namespace nda
+} // namespace enda

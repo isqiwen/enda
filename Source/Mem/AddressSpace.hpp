@@ -7,7 +7,6 @@
 
 namespace enda
 {
-    // Forward declarations
     template<char OP, ArrayOrScalar L, ArrayOrScalar R>
     struct expr;
 
@@ -37,16 +36,16 @@ namespace enda::mem
         Unified
     }; // Do not change order!
 
-    /// Using declaration for the `Device` address space (see enda::mem::AddressSpace).
+    // Using declaration for the `Device` address space (see enda::mem::AddressSpace).
     using AddressSpace::Device;
 
-    /// Using declaration for the `Host` address space (see enda::mem::AddressSpace).
+    // Using declaration for the `Host` address space (see enda::mem::AddressSpace).
     using AddressSpace::Host;
 
-    /// Using declaration for the `None` address space (see enda::mem::AddressSpace).
+    // Using declaration for the `None` address space (see enda::mem::AddressSpace).
     using AddressSpace::None;
 
-    /// Using declaration for the `Unified` address space (see enda::mem::AddressSpace).
+    // Using declaration for the `Unified` address space (see enda::mem::AddressSpace).
     using AddressSpace::Unified;
 
     /**
@@ -100,23 +99,23 @@ namespace enda::mem
     template<MemoryArray A1, MemoryArray... As>
     constexpr AddressSpace common_addr_space = combine<get_addr_space<A1>, get_addr_space<As>...>;
 
-    /// Specialization of enda::mem::get_addr_space for enda::Memory Array types.
+    // Specialization of enda::mem::get_addr_space for enda::Memory Array types.
     template<MemoryArray A>
     static constexpr AddressSpace get_addr_space<A> = A::storage_t::address_space;
 
-    /// Specialization of enda::mem::get_addr_space for enda::Handle types.
+    // Specialization of enda::mem::get_addr_space for enda::Handle types.
     template<Handle H>
     static constexpr AddressSpace get_addr_space<H> = H::address_space;
 
-    /// Specialization of enda::mem::get_addr_space for binary expressions involving two enda::ArrayOrScalar types.
+    // Specialization of enda::mem::get_addr_space for binary expressions involving two enda::ArrayOrScalar types.
     template<char OP, ArrayOrScalar L, ArrayOrScalar R>
     static constexpr AddressSpace get_addr_space<expr<OP, L, R>> = combine<get_addr_space<L>, get_addr_space<R>>;
 
-    /// Specialization of enda::mem::get_addr_space for function call expressions involving enda::Array types.
+    // Specialization of enda::mem::get_addr_space for function call expressions involving enda::Array types.
     template<typename F, Array... As>
     static constexpr AddressSpace get_addr_space<expr_call<F, As...>> = combine<get_addr_space<As>...>;
 
-    /// Specialization of enda::mem::get_addr_space for unary expressions involving an enda::Array type.
+    // Specialization of enda::mem::get_addr_space for unary expressions involving an enda::Array type.
     template<char OP, Array A>
     static constexpr AddressSpace get_addr_space<expr_unary<OP, A>> = get_addr_space<A>;
 
@@ -135,31 +134,31 @@ namespace enda::mem
                       "Error in enda::mem::check_adr_sp_valid: Device address space requires compiling with GPU support.");
     };
 
-    /// Constexpr variable that is true if all given types have a `Host` address space.
+    // Constexpr variable that is true if all given types have a `Host` address space.
     template<typename... Ts>
     requires(sizeof...(Ts) > 0) static constexpr bool on_host = ((get_addr_space<Ts> == mem::Host) and ...);
 
-    /// Constexpr variable that is true if all given types have a `Device` address space.
+    // Constexpr variable that is true if all given types have a `Device` address space.
     template<typename... Ts>
     requires(sizeof...(Ts) > 0) static constexpr bool on_device = ((get_addr_space<Ts> == mem::Device) and ...);
 
-    /// Constexpr variable that is true if all given types have a `Unified` address space.
+    // Constexpr variable that is true if all given types have a `Unified` address space.
     template<typename... Ts>
     requires(sizeof...(Ts) > 0) static constexpr bool on_unified = ((get_addr_space<Ts> == mem::Unified) and ...);
 
-    /// Constexpr variable that is true if all given types have the same address space.
+    // Constexpr variable that is true if all given types have the same address space.
     template<typename A0, typename... A>
     static constexpr bool have_same_addr_space = ((get_addr_space<A0> == get_addr_space<A>) and ... and true);
 
-    /// Constexpr variable that is true if all given types have an address space compatible with `Host`.
+    // Constexpr variable that is true if all given types have an address space compatible with `Host`.
     template<typename... Ts>
     static constexpr bool have_host_compatible_addr_space = ((on_host<Ts> or on_unified<Ts>) and ...);
 
-    /// Constexpr variable that is true if all given types have an address space compatible with `Device`.
+    // Constexpr variable that is true if all given types have an address space compatible with `Device`.
     template<typename... Ts>
     static constexpr bool have_device_compatible_addr_space = ((on_device<Ts> or on_unified<Ts>) and ...);
 
-    /// Constexpr variable that is true if all given types have compatible address spaces.
+    // Constexpr variable that is true if all given types have compatible address spaces.
     template<typename... Ts>
     static constexpr bool have_compatible_addr_space = (have_host_compatible_addr_space<Ts...> or have_device_compatible_addr_space<Ts...>);
 
@@ -177,7 +176,5 @@ namespace enda::mem
     static_assert(combine<Unified, Device> == Unified);
     static_assert(combine<Host, Unified> == Unified);
     static_assert(combine<Unified, Host> == Unified);
-
-    /** @} */
 
 } // namespace enda::mem

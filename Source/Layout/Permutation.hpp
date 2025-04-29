@@ -20,11 +20,6 @@
 namespace enda
 {
     /**
-     * @addtogroup utils_perms
-     * @{
-     */
-
-    /**
      * @brief Decode a `uint64_t` into a `std::array<int, N>`.
      *
      * @details The 64-bit code is split into 4-bit chunks, and each chunk is then decoded into a value in the range
@@ -66,17 +61,10 @@ namespace enda
         return result;
     }
 
-    /** @} */
-
 } // namespace enda
 
 namespace enda::permutations
 {
-
-    /**
-     * @addtogroup utils_perms
-     * @{
-     */
 
     /**
      * @brief Check if a given array is a valid permutation.
@@ -260,7 +248,5 @@ namespace enda::permutations
             result[i] = (i < pos ? (pos + i - p) % pos : i);
         return result;
     }
-
-    /** @} */
 
 } // namespace enda::permutations

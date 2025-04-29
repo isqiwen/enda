@@ -10,12 +10,6 @@
 
 namespace enda::itertools
 {
-
-    /**
-     * @addtogroup utilities
-     * @{
-     */
-
     /**
      * @brief Generic sentinel type that can be used to mark the end of a range.
      * @tparam Iter Iterator type.
@@ -23,7 +17,7 @@ namespace enda::itertools
     template<typename Iter>
     struct sentinel_t
     {
-        /// End iterator of some range.
+        // End iterator of some range.
         Iter it;
     };
 
@@ -39,7 +33,5 @@ namespace enda::itertools
     {
         return {std::move(it)};
     }
-
-    /** @} */
 
 } // namespace enda::itertools

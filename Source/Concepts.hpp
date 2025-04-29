@@ -166,13 +166,6 @@ namespace enda
 
     } // namespace mem
 
-    /** @} */
-
-    /**
-     * @addtogroup av_utils
-     * @{
-     */
-
     /**
      * @brief Check if a given type satisfies the array concept.
      *
@@ -310,7 +303,5 @@ namespace enda
      */
     template<typename A, typename U>
     concept HasValueTypeConstructibleFrom = Array<A> and (std::is_constructible_v<U, get_value_t<A>>);
-
-    /** @} */
 
 } // namespace enda

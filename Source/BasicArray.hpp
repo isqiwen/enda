@@ -42,7 +42,6 @@ namespace enda
 {
 
     /**
-     * @ingroup arrays_views
      * @brief A generic multi-dimensional array.
      *
      * @details Together with enda::basic_array_view, this class forms the backbone of the **enda** library. It is templated
@@ -60,29 +59,6 @@ namespace enda
      * allocating/deallocating the memory (see @ref mem_handles).
      *
      * In contrast to views (see enda::basic_array_view), regular arrays own the memory they use for data storage.
-     *
-     * @code{.cpp}
-     * // create a regular 3x2 array of ones
-     * auto arr = enda::ones<int>(3, 2);
-     * std::cout << arr << std::endl;
-     *
-     * // assign the value 42 to the first row
-     * arr(0, enda::ellipsis{}) = 42;
-     * std::cout << arr << std::endl;
-     * @endcode
-     *
-     * Output:
-     *
-     * @code{bash}
-     *
-     * [[1,1]
-     *  [1,1]
-     *  [1,1]]
-     *
-     * [[42,42]
-     *  [1,1]
-     *  [1,1]]
-     * @endcode
      *
      * Arrays and views share a lot of the same operations and functionalities. To turn a view into a regular array, use
      * enda::make_regular.
@@ -103,25 +79,25 @@ namespace enda
         static_assert((Algebra != 'V') or (Rank == 1), "Internal error in enda::basic_array: Algebra 'V' requires a rank 1 array");
 
     public:
-        /// Type of the values in the array (can not be const).
+        // Type of the values in the array (can not be const).
         using value_type = ValueType;
 
-        /// Type of the memory layout policy (see @ref layout_pols).
+        // Type of the memory layout policy (see @ref layout_pols).
         using layout_policy_t = LayoutPolicy;
 
-        /// Type of the memory layout (an enda::idx_map).
+        // Type of the memory layout (an enda::idx_map).
         using layout_t = typename LayoutPolicy::template mapping<Rank>;
 
-        /// Type of the container policy (see @ref mem_pols).
+        // Type of the container policy (see @ref mem_pols).
         using container_policy_t = ContainerPolicy;
 
-        /// Type of the memory handle (see @ref mem_handles).
+        // Type of the memory handle (see @ref mem_handles).
         using storage_t = typename ContainerPolicy::template handle<ValueType>;
 
-        /// The associated regular type.
+        // The associated regular type.
         using regular_type = basic_array;
 
-        /// Number of dimensions of the array.
+        // Number of dimensions of the array.
         static constexpr int rank = Rank;
 
         // Compile-time check.
@@ -167,19 +143,13 @@ namespace enda
          */
         auto as_array_view() const { return basic_array_view<const ValueType, Rank, LayoutPolicy, 'A', AccessorPolicy, OwningPolicy> {*this}; };
 
-        /// @deprecated Create the transpose of a 2-dimensional array. Use enda::transpose instead.
-        [[deprecated]] auto transpose() requires(Rank == 2) { return permuted_indices_view<encode(std::array<int, 2> {1, 0})>(*this); }
-
-        /// @deprecated Create the transpose of a 2-dimensional array. Use enda::transpose instead.
-        [[deprecated]] auto transpose() const requires(Rank == 2) { return permuted_indices_view<encode(std::array<int, 2> {1, 0})>(*this); }
-
-        /// Default constructor constructs an empty array with a default constructed memory handle and layout.
+        // Default constructor constructs an empty array with a default constructed memory handle and layout.
         basic_array() {}; // NOLINT (user-defined constructor to avoid value initialization of the sso buffer)
 
-        /// Default move constructor moves the memory handle and layout.
+        // Default move constructor moves the memory handle and layout.
         basic_array(basic_array&&) = default;
 
-        /// Default copy constructor copies the memory handle and layout.
+        // Default copy constructor copies the memory handle and layout.
         explicit basic_array(basic_array const& a) = default;
 
         /**
@@ -476,10 +446,10 @@ namespace enda
             return rand(std::array<long, Rank> {is...});
         }
 
-        /// Default move assignment moves the memory handle and layout from the right hand side array.
+        // Default move assignment moves the memory handle and layout from the right hand side array.
         basic_array& operator=(basic_array&&) = default;
 
-        /// Default copy assignment copies the memory handle and layout from the right hand side array.
+        // Default copy assignment copies the memory handle and layout from the right hand side array.
         basic_array& operator=(basic_array const&) = default;
 
         /**
@@ -577,7 +547,7 @@ namespace enda
          *
          * @param shape New shape of the array.
          */
-        [[gnu::noinline]] void resize(std::array<long, Rank> const& shape)
+        void resize(std::array<long, Rank> const& shape)
         {
             lay = layout_t(shape);
             if (sto.is_null() or (sto.size() != lay.size()))

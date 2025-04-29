@@ -1,16 +1,5 @@
-#include <algorithm>
-#include <array>
-#include <iostream>
-#include <list>
-#include <numeric>
-#include <utility>
-#include <vector>
+#include "../TestCommon.hpp"
 
-#include <gtest/gtest.h>
-
-#include <Itertools/Itertools.hpp>
-
-using namespace enda;
 using namespace enda::itertools;
 
 // A non-copyable integer.
@@ -321,22 +310,6 @@ TEST(ItertoolsTest, CombinationOfRangeAdaptingFunctions)
         total += static_cast<int>(a + b);
     }
     EXPECT_EQ(total, 99 * 100 / 2);
-
-    /*
-    // stride through a product range
-    for (int s = 1; s < 6; ++s)
-    {
-        int idx = 0;
-        for (auto [x1, x2] : stride(product(vec2, vec2), s))
-        {
-            auto i = idx / static_cast<int>(vec2.size());
-            auto j = idx - i * static_cast<int>(vec2.size());
-            EXPECT_EQ(x1, i);
-            EXPECT_EQ(x2, j);
-            idx += s;
-        }
-    }
-    */
 
     // zip two strided ranges
     for (int s = 1; s < 6; ++s)

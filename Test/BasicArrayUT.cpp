@@ -517,10 +517,8 @@ TEST(Array, CrossConstruct1)
     EXPECT_ARRAY_NEAR(Vd, Vi);
 }
 
-// ------------------
 TEST(BasicArrayTest, CrossConstruct2)
 {
-
     enda::array<long, 2> A(2, 3);
 
     for (int i = 0; i < 2; ++i)
@@ -541,8 +539,6 @@ TEST(BasicArrayTest, CrossConstruct2)
     for (int i = 1; i < 3; ++i)
         EXPECT_ARRAY_NEAR(W2[i], i * A);
 }
-
-// ------------------
 
 // check non ambiguity of resolution, solved by the check of value type in the constructor
 struct A

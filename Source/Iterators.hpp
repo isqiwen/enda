@@ -14,12 +14,6 @@
 
 namespace enda
 {
-
-    /**
-     * @addtogroup av_utils
-     * @{
-     */
-
     namespace detail
     {
 
@@ -219,22 +213,22 @@ namespace enda
         detail::grid_iterator<Rank> iter;
 
     public:
-        /// Iterator category.
+        // Iterator category.
         using iterator_category = std::forward_iterator_tag;
 
-        /// Value type.
+        // Value type.
         using value_type = T;
 
-        /// Difference type.
+        // Difference type.
         using difference_type = std::ptrdiff_t;
 
-        /// Pointer type.
+        // Pointer type.
         using pointer = T*;
 
-        /// Reference type.
+        // Reference type.
         using reference = T&;
 
-        /// Default constructor leaves the iterator in an uninitialized state.
+        // Default constructor leaves the iterator in an uninitialized state.
         array_iterator() = default;
 
         /**
@@ -250,38 +244,18 @@ namespace enda
             data(start), len(lengths), stri(strides), iter(len.data(), stri.data(), at_end)
         {}
 
-        /**
-         * @brief Get the current position/multi-dimensional index of the iterator.
-         * @return `std::array<long, Rank>` containing the current position/multi-dimensional index of the iterator.
-         */
         [[nodiscard]] auto indices() { return iter.indices(); }
 
-        /**
-         * @brief Dereference operator.
-         * @return Reference to the element at the position of the iterator.
-         */
         [[nodiscard]] value_type& operator*() const { return ((Pointer)data)[*iter]; }
 
-        /**
-         * @brief Member access operator.
-         * @return Reference to the element at the position of the iterator.
-         */
         [[nodiscard]] value_type& operator->() const { return operator*(); }
 
-        /**
-         * @brief Prefix increment operator.
-         * @return Reference to the current iterator.
-         */
         array_iterator& operator++()
         {
             ++iter;
             return *this;
         }
 
-        /**
-         * @brief Postfix increment operator.
-         * @return Copy of the current iterator.
-         */
         array_iterator operator++(int)
         {
             auto c = *this;
@@ -289,18 +263,8 @@ namespace enda
             return c;
         }
 
-        /**
-         * @brief Equal-to operator.
-         * @param rhs Other iterator to compare to.
-         * @return True if the positions of the iterators are equal, false otherwise.
-         */
         [[nodiscard]] bool operator==(array_iterator const& rhs) const { return (rhs.iter == iter); }
 
-        /**
-         * @brief Not-equal-to operator.
-         * @param rhs Other iterator to compare to.
-         * @return True if the positions of the iterators are not equal, false otherwise.
-         */
         [[nodiscard]] bool operator!=(array_iterator const& rhs) const { return (!operator==(rhs)); }
     };
 
@@ -329,22 +293,22 @@ namespace enda
         detail::grid_iterator<1> iter;
 
     public:
-        /// Iterator category.
+        // Iterator category.
         using iterator_category = std::random_access_iterator_tag;
 
-        /// Value type.
+        // Value type.
         using value_type = T;
 
-        /// Difference type.
+        // Difference type.
         using difference_type = std::ptrdiff_t;
 
-        /// Pointer type.
+        // Pointer type.
         using pointer = T*;
 
-        /// Reference type.
+        // Reference type.
         using reference = T&;
 
-        /// Default constructor leaves the iterator in an uninitialized state.
+        // Default constructor leaves the iterator in an uninitialized state.
         array_iterator() = default;
 
         /**
@@ -360,38 +324,18 @@ namespace enda
             data(start), len(lengths), stri(strides), iter(len.data(), stri.data(), at_end)
         {}
 
-        /**
-         * @brief Get the current position/index of the iterator.
-         * @return `std::array<long, 1>` containing the current position/index of the iterator.
-         */
         [[nodiscard]] auto indices() { return iter.indices(); }
 
-        /**
-         * @brief Dereference operator.
-         * @return Reference to the element at the position of the iterator.
-         */
         [[nodiscard]] T& operator*() const { return ((Pointer)data)[*iter]; }
 
-        /**
-         * @brief Member access operator.
-         * @return Reference to the element at the position of the iterator.
-         */
         T& operator->() const { return operator*(); }
 
-        /**
-         * @brief Prefix increment operator.
-         * @return Reference to the current iterator.
-         */
         array_iterator& operator++()
         {
             ++iter;
             return *this;
         }
 
-        /**
-         * @brief Postfix increment operator.
-         * @return Copy of the current iterator.
-         */
         array_iterator operator++(int)
         {
             auto c = *this;
@@ -399,20 +343,12 @@ namespace enda
             return c;
         }
 
-        /**
-         * @brief Prefix decrement operator.
-         * @return Reference to the current iterator.
-         */
         array_iterator& operator--()
         {
             --iter;
             return *this;
         }
 
-        /**
-         * @brief Postfix decrement operator.
-         * @return Copy of the current iterator.
-         */
         array_iterator operator--(int)
         {
             auto c = *this;
@@ -420,130 +356,38 @@ namespace enda
             return c;
         }
 
-        /**
-         * @brief Equal-to operator.
-         * @param rhs Right hand side operand.
-         * @return True if the positions of the iterators are equal, false otherwise.
-         */
         [[nodiscard]] bool operator==(array_iterator const& rhs) const { return (rhs.iter == iter); }
 
-        /**
-         * @brief Not-equal-to operator.
-         * @param rhs Right hand side operand.
-         * @return True if the positions of the iterators are not equal, false otherwise.
-         */
         [[nodiscard]] bool operator!=(array_iterator const& rhs) const { return (!operator==(rhs)); }
 
-        /**
-         * @brief Compound assignment addition operator increments the iterator a given number of times.
-         *
-         * @param n Number of times to increment the iterator.
-         * @return Reference to the current iterator.
-         */
         array_iterator& operator+=(std::ptrdiff_t n)
         {
             iter += n;
             return *this;
         }
 
-        /**
-         * @brief Compound assignment subtraction operator decrements the iterator a given number of times.
-         *
-         * @param n Number of times to decrement the iterator.
-         * @return Reference to the current iterator.
-         */
         array_iterator& operator-=(std::ptrdiff_t n)
         {
             iter += (-n);
             return *this;
         }
 
-        /**
-         * @brief Binary addition of an integer with an 1-dimensional array iterator.
-         *
-         * @param n Integer.
-         * @param it 1-dimensional array iterator.
-         * @return Array iterator incremented n times.
-         */
         [[nodiscard]] friend array_iterator operator+(std::ptrdiff_t n, array_iterator it) { return it += n; }
 
-        /**
-         * @brief Binary addition of an 1-dimensional array iterator with an integer.
-         *
-         * @param it 1-dimensional array iterator.
-         * @param n Integer.
-         * @return Array iterator incremented n times.
-         */
         [[nodiscard]] friend array_iterator operator+(array_iterator it, std::ptrdiff_t n) { return it += n; }
 
-        /**
-         * @brief Binary subtraction of an 1-dimensional array iterator with an integer.
-         *
-         * @param it 1-dimensional array iterator.
-         * @param n Integer.
-         * @return Array iterator decremented n times.
-         */
         [[nodiscard]] friend array_iterator operator-(array_iterator it, std::ptrdiff_t n) { return it -= n; }
 
-        /**
-         * @brief Binary subtraction of two 1-dimensional array iterators.
-         *
-         * @param lhs Left hand side operand.
-         * @param rhs Right hand side operand.
-         * @return Difference between their positions.
-         */
         [[nodiscard]] friend std::ptrdiff_t operator-(array_iterator const& lhs, array_iterator const& rhs) { return lhs.iter - rhs.iter; }
 
-        /**
-         * @brief Subscript operator.
-         *
-         * @param n Number of times to increment the iterator before dereferencing it.
-         * @return Reference to the element at the position of the incremented iterator.
-         */
         [[nodiscard]] T& operator[](std::ptrdiff_t n) { return ((Pointer)data)[*(iter + n)]; }
 
-        // FIXME C++20 ? with <=> operator
-        /**
-         * @brief Less-than comparison operator for two 1-dimensional array iterators.
-         *
-         * @param lhs Left hand side operand.
-         * @param rhs Right hand side operand.
-         * @return True if the position of the left hand side iterator is less than the position of the right hand side
-         * iterator, false otherwise.
-         */
         [[nodiscard]] friend bool operator<(array_iterator const& lhs, array_iterator const& rhs) { return lhs.iter < rhs.iter; }
 
-        /**
-         * @brief Greater-than comparison operator for two 1-dimensional array iterators.
-         *
-         * @param lhs Left hand side operand.
-         * @param rhs Right hand side operand.
-         * @return True if the position of the left hand side iterator is greater than the position of the right hand side
-         * iterator, false otherwise.
-         */
         [[nodiscard]] friend bool operator>(array_iterator const& lhs, array_iterator const& rhs) { return lhs.iter > rhs.iter; }
 
-        /**
-         * @brief Less-than or equal-to comparison operator for two 1-dimensional array iterators.
-         *
-         * @param lhs Left hand side operand.
-         * @param rhs Right hand side operand.
-         * @return True if the position of the left hand side iterator is less than or equal to the position of the right
-         * hand side iterator, false otherwise.
-         */
         [[nodiscard]] friend bool operator<=(array_iterator const& lhs, array_iterator const& rhs) { return not(lhs.iter > rhs.iter); }
 
-        /**
-         * @brief Greater-than or equal-to comparison operator for two 1-dimensional array iterators.
-         *
-         * @param lhs Left hand side operand.
-         * @param rhs Right hand side operand.
-         * @return True if the position of the left hand side iterator is greater than or equal to the position of the right
-         * hand side iterator, false otherwise.
-         */
         [[nodiscard]] friend bool operator>=(array_iterator const& lhs, array_iterator const& rhs) { return not(lhs.iter < rhs.iter); }
     };
-
-    /** @} */
-
 } // namespace enda

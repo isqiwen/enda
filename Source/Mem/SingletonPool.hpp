@@ -1,9 +1,9 @@
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <chrono>
 
 #include "Exceptions.hpp"
 #include "Macros.hpp"
@@ -39,7 +39,7 @@ namespace enda::mem
 
         bool init() noexcept
         {
-            void* raw_buffer = malloc<s_address_space, s_alignment>(s_total_size);
+            void* raw_buffer = malloc<s_address_space, k_cache_line>(s_total_size);
 
             if (nullptr == raw_buffer)
             {
@@ -117,17 +117,16 @@ namespace enda::mem
 
     private:
         static constexpr auto      s_address_space     = AdrSp;
-        static constexpr size_type s_alignment         = k_cache_line;
-        static constexpr size_type s_uint32_align_mask = s_alignment / sizeof(uint32_t) - 1;
+        static constexpr size_type s_uint32_align_mask = k_cache_line / sizeof(uint32_t) - 1;
         static constexpr size_type s_block_size        = 1ULL << BlockSizeL2;
         static constexpr uint32_t  s_hint_mask         = (1 << BlockCntL2) - 1;
         static constexpr size_type s_bitset_words      = (concurrent_bitset::buffer_bound_lg2(BlockCntL2) + s_uint32_align_mask) & ~s_uint32_align_mask;
         static constexpr size_type s_data_size         = s_block_size << BlockCntL2;
         static constexpr size_type s_total_size        = sizeof(uint32_t) * s_bitset_words + s_data_size;
 
-        std::unique_ptr<char, ptr_deleter<s_address_space, s_alignment>> m_buffer        = nullptr;
-        uint32_t*                                                        m_status_buffer = nullptr;
-        char*                                                            m_data_buffer   = nullptr;
+        std::unique_ptr<char, ptr_deleter<s_address_space, k_cache_line>> m_buffer        = nullptr;
+        uint32_t*                                                         m_status_buffer = nullptr;
+        char*                                                             m_data_buffer   = nullptr;
     };
 
 #define ENDA_CREATE_POOL(tag, block_size, block_count) \

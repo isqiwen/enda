@@ -1,10 +1,5 @@
 #include "../TestCommon.hpp"
 
-#include <algorithm>
-#include <array>
-#include <numeric>
-#include <random>
-
 // Make identity or random permutation of size N.
 template<int N>
 auto make_permutation(bool random = true)

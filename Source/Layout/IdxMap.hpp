@@ -1,5 +1,6 @@
 /**
- * @file
+ * @file IdxMap.hpp
+ *
  * @brief Provides a class that maps multi-dimensional indices to a linear index and vice versa.
  */
 
@@ -25,11 +26,6 @@
 
 namespace enda
 {
-    /**
-     * @addtogroup layout_idx
-     * @{
-     */
-
     /**
      * @brief Fortran/Column-major stride order.
      * @details The first dimension varies the fastest, the last dimension the slowest.
@@ -94,35 +90,35 @@ namespace enda
         std::array<long, Rank> str;
 
     public:
-        /// Encoded static extents.
+        // Encoded static extents.
         static constexpr uint64_t static_extents_encoded = StaticExtents;
 
-        /// Decoded static extents.
+        // Decoded static extents.
         static constexpr std::array<int, Rank> static_extents = decode<Rank>(StaticExtents);
 
-        /// Decoded stride order.
+        // Decoded stride order.
         static constexpr std::array<int, Rank> stride_order = (StrideOrder == 0 ? permutations::identity<Rank>() : decode<Rank>(StrideOrder));
 
-        /// Encoded stride order.
+        // Encoded stride order.
         static constexpr uint64_t stride_order_encoded = encode(stride_order);
 
-        /// Compile-time memory layout properties.
+        // Compile-time memory layout properties.
         static constexpr layout_prop_e layout_prop = LayoutProp;
 
-        /// Compile-time information about the layout (stride order and layout properties).
+        // Compile-time information about the layout (stride order and layout properties).
         static constexpr layout_info_t layout_info = layout_info_t {stride_order_encoded, layout_prop};
 
-        /// Alias template to check if type `T` can be used to access a single element.
+        // Alias template to check if type `T` can be used to access a single element.
         template<typename T>
         static constexpr int argument_is_allowed_for_call = std::is_constructible_v<long, T>;
 
-        /// Alias template to check if type `T` can be used to either access a single element or a slice of elements.
+        // Alias template to check if type `T` can be used to either access a single element or a slice of elements.
         template<typename T>
         static constexpr int argument_is_allowed_for_call_or_slice =
             std::is_same_v<range, T> or std::is_same_v<range::all_t, T> or std::is_same_v<ellipsis, T> or std::is_constructible_v<long, T>;
 
     protected:
-        /// Number of dynamic dimensions/extents.
+        // Number of dynamic dimensions/extents.
         static constexpr int n_dynamic_extents = []() {
             int r = 0;
             for (int u = 0; u < Rank; ++u)
@@ -308,8 +304,6 @@ namespace enda
             return extents;
         }
 
-        // FIXME ADD A CHECK layout_prop_e ... compare to stride and
-
     public:
         /**
          * @brief Default constructor.
@@ -459,16 +453,16 @@ namespace enda
             static_assert(R == Rank, "Error in enda::idx_map: Incompatible ranks");
         }
 
-        /// Default copy constructor.
+        // Default copy constructor.
         idx_map(idx_map const&) = default;
 
-        /// Default move constructor.
+        // Default move constructor.
         idx_map(idx_map&&) = default;
 
-        /// Default copy assignment operator.
+        // Default copy assignment operator.
         idx_map& operator=(idx_map const&) = default;
 
-        /// Default move assignment operator.
+        // Default move assignment operator.
         idx_map& operator=(idx_map&&) = default;
 
     private:
@@ -704,7 +698,5 @@ namespace enda
                                                                                                     permutations::apply_inverse(permu, strides())};
         }
     };
-
-    /** @} */
 
 } // namespace enda

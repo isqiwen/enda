@@ -41,7 +41,7 @@ TEST(Matrix, Create2Complex)
     EXPECT_EQ(m5.shape(), (enda::shape_t<2> {5, 2}));
 
     auto m6 = matrix<dcomplex> {{{-10, -3}, {12, 14}, {14, 12}, {16, 16}, {18, 16}}};
-    EXPECT_EQ(m6.shape(), (enda::shape_t<2> {1, 5})); /// VERY DANGEROUS !
+    EXPECT_EQ(m6.shape(), (enda::shape_t<2> {1, 5})); // VERY DANGEROUS !
 }
 
 // ===============================================================
